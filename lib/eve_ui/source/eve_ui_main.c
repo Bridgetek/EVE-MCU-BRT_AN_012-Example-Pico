@@ -73,7 +73,7 @@ void eve_ui_setup()
 	EVE_Init();
 
 	eve_ui_calibrate();
-	
+
 	init_ram_g();
 }
 

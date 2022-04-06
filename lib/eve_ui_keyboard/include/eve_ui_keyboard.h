@@ -179,8 +179,52 @@ struct key_state
 
 #define EVE_OPTIONS_READ_ONLY		(1 << 8) // Flag an item as read only
 
+/**
+ * @brief Keyboard screen components to show on display.
+ */
+//@{
+#define KEYBOARD_COMPONENTS_ALPHANUMERIC (1 << 0)	 // Show keyboard/keypad
+#define KEYBOARD_COMPONENTS_FUNCTION (1 << 1)		 // F1 to F12
+#define KEYBOARD_COMPONENTS_MODIFIERS (1 << 2)		 // Ctrl, Alt keys etc
+#define KEYBOARD_COMPONENTS_LEDS (1 << 3)			 // Scroll, Num and Caps Lock LEDs
+#define KEYBOARD_COMPONENTS_TOAST (1 << 4)			 // Toast (announcement area)
+#define KEYBOARD_COMPONENTS_EDIT (1 << 5)			 // Edit area
+#define KEYBOARD_COMPONENTS_ESCAPE (1 << 6)			 // Escape Key
+#define KEYBOARD_COMPONENTS_KEYPAD_DOT (1 << 11)	 // Keypad .
+#define KEYBOARD_COMPONENTS_KEYPAD_CONTROL (1 << 13) // Keypad control items (Ins, Home, arrows etc)
+#define KEYBOARD_COMPONENTS_KEYPAD_ARITH (1 << 14)	 // Keypad arithmetic operators
+#define KEYBOARD_COMPONENTS_FULL (0xffff)
+//@}
+
+/**
+ * @brief Keyboard layout to show on keyboard/keypad section of display.
+ */
+//@{
+#define KEYBOARD_LAYOUT_PC_US_ALPHA 1
+#define KEYBOARD_LAYOUT_PC_UK_ALPHA 2
+#define KEYBOARD_LAYOUT_PC_DE_ALPHA 3
+//@}
+
+/**
+ * @brief Keyboard screen to show on keyboard/keypad section of display.
+ */
+//@{
+#define KEYBOARD_SCREEN_SETTINGS 0
+#define KEYBOARD_SCREEN_ALPHANUMERIC 1
+#define KEYBOARD_SCREEN_KEYPAD 2
+#define KEYBOARD_SCREEN_EXTRA 3
+#define KEYBOARD_SCREEN_SPECIAL 4
+//@}
+
 void eve_ui_keyboard_load_fonts(void);
 void eve_ui_keyboard_load_images(void);
+
+void eve_ui_keyboard_set_layout(uint8_t layout);
+uint8_t eve_ui_keyboard_get_layout(void);
+void eve_ui_keyboard_set_screen(uint8_t screen);
+uint8_t eve_ui_keyboard_get_screen(void);
+void eve_ui_keyboard_set_components(uint32_t components);
+uint32_t eve_ui_keyboard_get_components(void);
 
 void eve_ui_keyboard_start(void);
 int8_t eve_ui_keyboard_loop(struct key_state *state, uint8_t *tag);

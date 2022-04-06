@@ -64,22 +64,6 @@
 #define PACK __attribute__((__packed__))
 
 /**
- * @brief Keyboard screen components to show on display.
- */
-//@{
-#define KEYBOARD_COMPONENTS_ALPHANUMERIC (1 << 0)	 // Show keyboard/keypad
-#define KEYBOARD_COMPONENTS_FUNCTION (1 << 1)		 // F1 to F12
-#define KEYBOARD_COMPONENTS_MODIFIERS (1 << 2)		 // Ctrl, Alt keys etc
-#define KEYBOARD_COMPONENTS_LEDS (1 << 3)			 // Scroll, Num and Caps Lock LEDs
-#define KEYBOARD_COMPONENTS_TOAST (1 << 4)			 // Toast (announcement area)
-#define KEYBOARD_COMPONENTS_EDIT (1 << 5)			 // Edit area
-#define KEYBOARD_COMPONENTS_KEYPAD_DOT (1 << 11)	 // Keypad .
-#define KEYBOARD_COMPONENTS_KEYPAD_CONTROL (1 << 13) // Keypad control items (Ins, Home, arrows etc)
-#define KEYBOARD_COMPONENTS_KEYPAD_ARITH (1 << 14)	 // Keypad arithmetic operators
-#define KEYBOARD_COMPONENTS_FULL (0xffff)
-//@}
-
-/**
  * @brief Simple state values for detecting a keypress and acting on it.
  * @details A modifier key will only affect the next scan code sent in this
  * example. However, a scan key will send a report to the host.
@@ -91,26 +75,6 @@
 #define KEY_PRESS_NONE 0
 #define KEY_PRESS_MODIFIER 1
 #define KEY_PRESS_SCAN 2
-//@}
-
-/**
- * @brief Keyboard layout to show on keyboard/keypad section of display.
- */
-//@{
-#define KEYBOARD_LAYOUT_PC_US_ALPHA 1
-#define KEYBOARD_LAYOUT_PC_UK_ALPHA 2
-#define KEYBOARD_LAYOUT_PC_DE_ALPHA 3
-//@}
-
-/**
- * @brief Keyboard screen to show on keyboard/keypad section of display.
- */
-//@{
-#define KEYBOARD_SCREEN_SETTINGS 0
-#define KEYBOARD_SCREEN_ALPHANUMERIC 1
-#define KEYBOARD_SCREEN_KEYPAD 2
-#define KEYBOARD_SCREEN_EXTRA 3
-#define KEYBOARD_SCREEN_SPECIAL 4
 //@}
 
 /**
@@ -352,6 +316,23 @@ uint16_t img_keyboard_height;
 uint16_t img_media_width;
 uint16_t img_media_height;
 //@}
+
+/**
+ * @brief Extern links to fonts which are used here.
+ */
+extern const uint8_t font_arial_ttf_15_L4[];
+extern const uint32_t font_arial_ttf_15_L4_size;
+/**
+ * @brief Extern links to images which are used here.
+ */
+extern const uint8_t img_bridgetek_logo_jpg[] asm("img_bridgetek_logo_jpg");
+extern const uint8_t img_settings_jpg[] asm("img_settings_jpg");
+extern const uint8_t img_cancel_jpg[] asm("img_cancel_jpg");
+extern const uint8_t img_tick_jpg[] asm("img_z_jpg");
+extern const uint8_t img_refresh_jpg[] asm("img_refresh_jpg");
+extern const uint8_t img_keypad_jpg[] asm("img_keypad_jpg");
+extern const uint8_t img_keyboard_jpg[] asm("img_keyboard_jpg");
+extern const uint8_t img_media_jpg[] asm("img_media_jpg");
 
 /* MACROS **************************************************************************/
 
@@ -810,7 +791,7 @@ static void draw_function_keys(uint8_t tag)
 	uint32_t button_colour;
 	int i;
 
-	if (keyboard_components & KEYBOARD_COMPONENTS_FUNCTION)
+	if (keyboard_components & KEYBOARD_COMPONENTS_ESCAPE)
 	{
 		button_colour = (tag == TAG_ESCAPE) ? KEY_COLOUR_HIGHLIGHT : KEY_COLOUR_CONTROL;
 		EVE_CMD_FGCOLOR(button_colour);
@@ -819,7 +800,10 @@ static void draw_function_keys(uint8_t tag)
 			KEY_COL_ALPHA(0), KEY_ROW_ALPHA(0) + (KEY_HEIGHT_ALPHA * 1) / 6,
 			KEY_WIDTH_ALPHA(1), (KEY_HEIGHT_ALPHA * 2) / 3,
 			KEYBOARD_FONT, EVE_OPT_FLAT, "Esc");
+	}
 
+	if (keyboard_components & KEYBOARD_COMPONENTS_FUNCTION)
+	{
 		for (i = 0; i < 12; i++)
 		{
 			char name[4];
@@ -1922,19 +1906,6 @@ static uint8_t eve_loop(uint8_t *tag)
 	return ret;
 }
 
-// Extern links to fonts which are used here.
-extern const uint8_t font_arial_ttf_15_L4[];
-extern const uint32_t font_arial_ttf_15_L4_size;
-// Extern links to images which are used here.
-extern const uint8_t img_bridgetek_logo_jpg[] asm("img_bridgetek_logo_jpg");
-extern const uint8_t img_settings_jpg[] asm("img_settings_jpg");
-extern const uint8_t img_cancel_jpg[] asm("img_cancel_jpg");
-extern const uint8_t img_tick_jpg[] asm("img_z_jpg");
-extern const uint8_t img_refresh_jpg[] asm("img_refresh_jpg");
-extern const uint8_t img_keypad_jpg[] asm("img_keypad_jpg");
-extern const uint8_t img_keyboard_jpg[] asm("img_keyboard_jpg");
-extern const uint8_t img_media_jpg[] asm("img_media_jpg");
-
 /* FUNCTIONS ***********************************************************************/
 
 void eve_ui_keyboard_load_fonts(void)
@@ -1970,17 +1941,66 @@ void eve_ui_keyboard_load_images(void)
 				&img_media_width, &img_media_height);
 }
 
-#define KEYBOARD_COMPONENTS (KEYBOARD_COMPONENTS_ALPHANUMERIC | KEYBOARD_COMPONENTS_FUNCTION | KEYBOARD_COMPONENTS_MODIFIERS | KEYBOARD_COMPONENTS_LEDS | KEYBOARD_COMPONENTS_KEYPAD_DOT | KEYBOARD_COMPONENTS_KEYPAD_CONTROL | KEYBOARD_COMPONENTS_KEYPAD_ARITH)
+#define KEYBOARD_COMPONENTS (KEYBOARD_COMPONENTS_ALPHANUMERIC | KEYBOARD_COMPONENTS_FUNCTION | KEYBOARD_COMPONENTS_MODIFIERS | \
+		KEYBOARD_COMPONENTS_LEDS | KEYBOARD_COMPONENTS_KEYPAD_DOT | KEYBOARD_COMPONENTS_KEYPAD_CONTROL | \
+		KEYBOARD_COMPONENTS_KEYPAD_ARITH | KEYBOARD_COMPONENTS_ESCAPE)
 
 #ifndef USE_EXTRA_SCREEN
 #define KEYBOARD_OPTIONS (EVE_HEADER_KEYBOARD_BUTTON | EVE_HEADER_KEYPAD_BUTTON | EVE_HEADER_LOGO | EVE_HEADER_SETTINGS_BUTTON)
 #else
 #ifndef USE_SPECIAL_SCREEN
-#define KEYBOARD_OPTIONS (EVE_HEADER_KEYBOARD_BUTTON | EVE_HEADER_KEYPAD_BUTTON | EVE_HEADER_LOGO | EVE_HEADER_SETTINGS_BUTTON | EVE_HEADER_EXTRA_BUTTON)
+#define KEYBOARD_OPTIONS (EVE_HEADER_KEYBOARD_BUTTON | EVE_HEADER_KEYPAD_BUTTON | EVE_HEADER_LOGO | EVE_HEADER_SETTINGS_BUTTON | \
+		EVE_HEADER_EXTRA_BUTTON)
 #else
-#define KEYBOARD_OPTIONS (EVE_HEADER_KEYBOARD_BUTTON | EVE_HEADER_KEYPAD_BUTTON | EVE_HEADER_LOGO | EVE_HEADER_SETTINGS_BUTTON | EVE_HEADER_EXTRA_BUTTON | EVE_HEADER_SPECIAL_BUTTON)
+#define KEYBOARD_OPTIONS (EVE_HEADER_KEYBOARD_BUTTON | EVE_HEADER_KEYPAD_BUTTON | EVE_HEADER_LOGO | EVE_HEADER_SETTINGS_BUTTON | \
+		EVE_HEADER_EXTRA_BUTTON | EVE_HEADER_SPECIAL_BUTTON)
 #endif // USE_SPECIAL_SCREEN
 #endif // USE_EXTRA_SCREEN
+
+void eve_ui_keyboard_set_layout(uint8_t layout)
+{
+	keyboard_layout = layout;
+}
+
+uint8_t eve_ui_keyboard_get_layout(void)
+{
+	return keyboard_layout;
+}
+
+void eve_ui_keyboard_set_components(uint32_t components)
+{
+	keyboard_components = components;
+}
+
+uint32_t eve_ui_keyboard_get_components(void)
+{
+	return keyboard_components;
+}
+
+void eve_ui_keyboard_set_screen(uint8_t screen)
+{
+	static uint8_t push_screen = KEYBOARD_SCREEN_SETTINGS;
+
+	if ((keyboard_screen == KEYBOARD_SCREEN_SETTINGS)
+			&& (screen == KEYBOARD_SCREEN_SETTINGS))
+	{
+		keyboard_screen = push_screen;
+	}
+	else if (screen == KEYBOARD_SCREEN_SETTINGS)
+	{
+		push_screen = keyboard_screen;
+		keyboard_screen = screen;
+	}
+	else
+	{
+		keyboard_screen = screen;
+	}
+}
+
+uint8_t eve_ui_keyboard_get_screen(void)
+{
+	return keyboard_screen;
+}
 
 void eve_ui_keyboard_splash(char *toast, uint32_t options)
 {
