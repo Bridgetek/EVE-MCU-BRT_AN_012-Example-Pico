@@ -331,6 +331,28 @@ static const uint8_t keymap_bot_row_us[] = {
 };
 //@}
 
+/**
+ @brief Dimensions of custom images.
+ */
+//@{
+uint16_t img_bridgetek_logo_width;
+uint16_t img_bridgetek_logo_height;
+uint16_t img_settings_width;
+uint16_t img_settings_height;
+uint16_t img_cancel_width;
+uint16_t img_cancel_height;
+uint16_t img_tick_width;
+uint16_t img_tick_height;
+uint16_t img_refresh_width;
+uint16_t img_refresh_height;
+uint16_t img_keypad_width;
+uint16_t img_keypad_height;
+uint16_t img_keyboard_width;
+uint16_t img_keyboard_height;
+uint16_t img_media_width;
+uint16_t img_media_height;
+//@}
+
 /* MACROS **************************************************************************/
 
 /* LOCAL FUNCTIONS / INLINES *******************************************************/
@@ -1915,45 +1937,37 @@ extern const uint8_t img_media_jpg[] asm("img_media_jpg");
 
 /* FUNCTIONS ***********************************************************************/
 
-uint32_t eve_ui_keyboard_load_fonts(uint32_t start_addr)
+void eve_ui_keyboard_load_fonts(void)
 {
-	uint32_t dummy = start_addr;
-
-	dummy = eve_ui_load_font(font_arial_ttf_15_L4, font_arial_ttf_15_L4_size, FONT_CUSTOM_EXTENDED, dummy);
-
-	return dummy;
+	eve_ui_load_font(font_arial_ttf_15_L4, font_arial_ttf_15_L4_size, FONT_CUSTOM_EXTENDED);
 }
 
-uint32_t eve_ui_keyboard_load_images(uint32_t start_addr)
+void eve_ui_keyboard_load_images(void)
 {
-	uint32_t dummy = start_addr;
-
 	// Load images statically and sequentially.
-	dummy = eve_ui_load_image(img_bridgetek_logo_jpg, dummy,
-			BITMAP_BRIDGETEK_LOGO, &img_bridgetek_logo_width, &img_bridgetek_logo_height);
+	eve_ui_load_jpg(img_bridgetek_logo_jpg, BITMAP_BRIDGETEK_LOGO, 
+				&img_bridgetek_logo_width, &img_bridgetek_logo_height);
 
-	dummy = eve_ui_load_image(img_settings_jpg, dummy,
-			BITMAP_SETTINGS, &img_settings_width, &img_settings_height);
+	eve_ui_load_jpg(img_settings_jpg, BITMAP_SETTINGS, 
+				&img_settings_width, &img_settings_height);
 
-	dummy = eve_ui_load_image(img_cancel_jpg, dummy,
-			BITMAP_CANCEL, &img_cancel_width, &img_cancel_height);
+	eve_ui_load_jpg(img_cancel_jpg, BITMAP_CANCEL, 
+				&img_cancel_width, &img_cancel_height);
 
-	dummy = eve_ui_load_image(img_tick_jpg, dummy,
-			BITMAP_SAVE, &img_tick_width, &img_tick_height);
+	eve_ui_load_jpg(img_tick_jpg, BITMAP_SAVE, 
+				&img_tick_width, &img_tick_height);
 
-	dummy = eve_ui_load_image(img_refresh_jpg, dummy,
-			BITMAP_REFRESH, &img_refresh_width, &img_refresh_height);
+	eve_ui_load_jpg(img_refresh_jpg, BITMAP_REFRESH, 
+				&img_refresh_width, &img_refresh_height);
 
-	dummy = eve_ui_load_image(img_keypad_jpg, dummy,
-			BITMAP_KEYPAD, &img_keypad_width, &img_keypad_height);
+	eve_ui_load_jpg(img_keypad_jpg, BITMAP_KEYPAD, 
+				&img_keypad_width, &img_keypad_height);
 
-	dummy = eve_ui_load_image(img_keyboard_jpg, dummy,
-			BITMAP_KEYBOARD, &img_keyboard_width, &img_keyboard_height);
+	eve_ui_load_jpg(img_keyboard_jpg, BITMAP_KEYBOARD, 
+				&img_keyboard_width, &img_keyboard_height);
 
-	dummy = eve_ui_load_image(img_media_jpg, dummy,
-			BITMAP_MEDIA, &img_media_width, &img_media_height);
-
-	return dummy;
+	eve_ui_load_jpg(img_media_jpg, BITMAP_MEDIA, 
+				&img_media_width, &img_media_height);
 }
 
 #define KEYBOARD_COMPONENTS (KEYBOARD_COMPONENTS_ALPHANUMERIC | KEYBOARD_COMPONENTS_FUNCTION | KEYBOARD_COMPONENTS_MODIFIERS | KEYBOARD_COMPONENTS_LEDS | KEYBOARD_COMPONENTS_KEYPAD_DOT | KEYBOARD_COMPONENTS_KEYPAD_CONTROL | KEYBOARD_COMPONENTS_KEYPAD_ARITH)
@@ -1990,10 +2004,10 @@ void eve_ui_keyboard_start(void)
 {
 	uint32_t img_address;
 
-	img_address = eve_ui_keyboard_load_fonts(0);
+	eve_ui_keyboard_load_fonts();
 	// Decode JPEG images from flash into RAM_DL on FT8xx.
 	// Start at RAM_G after fonts (as font addresses must be fixed).
-	img_end_address = eve_ui_keyboard_load_images(img_address);
+	eve_ui_keyboard_load_images();
 	
 	keyboard_components = KEYBOARD_COMPONENTS;
 	keyboard_screen = KEYBOARD_SCREEN_ALPHANUMERIC;

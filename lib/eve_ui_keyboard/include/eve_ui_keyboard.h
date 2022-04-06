@@ -179,39 +179,8 @@ struct key_state
 
 #define EVE_OPTIONS_READ_ONLY		(1 << 8) // Flag an item as read only
 
-/**
- @brief Pointers to custom images in external C file.
- */
-//@{
-extern uint16_t img_bridgetek_logo_width;
-extern uint16_t img_bridgetek_logo_height;
-
-extern uint16_t img_settings_width;
-extern uint16_t img_settings_height;
-
-extern uint16_t img_cancel_width;
-extern uint16_t img_cancel_height;
-
-extern uint16_t img_tick_width;
-extern uint16_t img_tick_height;
-
-extern uint16_t img_refresh_width;
-extern uint16_t img_refresh_height;
-
-extern uint16_t img_keypad_width;
-extern uint16_t img_keypad_height;
-
-extern uint16_t img_keyboard_width;
-extern uint16_t img_keyboard_height;
-
-extern uint16_t img_media_width;
-extern uint16_t img_media_height;
-
-extern uint32_t img_end_address;
-//@}
-
-uint32_t eve_ui_keyboard_load_fonts(uint32_t start_addr);
-uint32_t eve_ui_keyboard_load_images(uint32_t start_addr);
+void eve_ui_keyboard_load_fonts(void);
+void eve_ui_keyboard_load_images(void);
 
 void eve_ui_keyboard_start(void);
 int8_t eve_ui_keyboard_loop(struct key_state *state, uint8_t *tag);

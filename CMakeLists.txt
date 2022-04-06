@@ -32,6 +32,7 @@ add_executable(${PROJECT_NAME}
         lib/eve_ui/source/eve_ui_images.c
         lib/eve_ui/source/eve_ui_ext_font.c
         lib/eve_ui/ports/eve_arch_rpi/eve_ui_mcu_rp2040.c
+        lib/eve_ui/source/eve_ram_g.c
         # Source code for EVE UI Keyboard library
         lib/eve_ui_keyboard/source/eve_ui_keyboard.c
         lib/eve_ui_keyboard/Fonts/C/arial.ttf_15_L4.c

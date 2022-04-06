@@ -87,12 +87,19 @@ void eve_ui_screenshot(void);
 /* Font helper routines.
  * Definitions of these functions are in the source/eve_ui_ext_font.c file.
  */
-uint32_t eve_ui_load_font(const uint8_t *font_data, uint32_t font_size, uint8_t handle, uint32_t start_addr);
+uint32_t eve_ui_load_font(const uint8_t *font_data, uint32_t font_size, uint8_t font_handle);
+uint32_t eve_ui_load_font2(uint8_t first, const uint8_t *font_data, uint32_t font_size, uint8_t font_handle);
 
 /* Image helper routines.
  * Definitions of these functions are in the source/eve_ui_images.c file.
  */
-uint32_t eve_ui_load_image(const uint8_t *img_data, uint32_t start_addr, uint8_t handle, uint16_t *width, uint16_t *height);
+uint32_t eve_ui_jpg_image_size(const uint8_t *image_data, uint16_t *width, uint16_t *height);
+uint32_t eve_ui_load_argb2(const uint8_t *image_data, uint32_t image_size, uint8_t image_handle,
+		uint16_t img_width, uint16_t img_height);
+uint32_t eve_ui_load_argb1555(const uint8_t *image_data, uint32_t image_size, uint8_t image_handle,
+		uint16_t img_width, uint16_t img_height);
+uint32_t eve_ui_load_jpg(const uint8_t *image_data, uint8_t handle,
+		uint16_t *width, uint16_t *height);
 
 /* Platform specific functions. 
  * Definition of these functions are in the eve_ui/ports/<platform> folders.

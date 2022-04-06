@@ -44,6 +44,7 @@
 /* INCLUDES ************************************************************************/
 
 #include "eve_ui.h"
+#include "eve_ram_g.h"
 
 /* CONSTANTS ***********************************************************************/
 
@@ -53,28 +54,6 @@
 #define ENABLE_SCREENSHOT
 
 /* GLOBAL VARIABLES ****************************************************************/
-
-/**
- @brief Dimensions of custom images.
- */
-//@{
-uint16_t img_bridgetek_logo_width;
-uint16_t img_bridgetek_logo_height;
-uint16_t img_settings_width;
-uint16_t img_settings_height;
-uint16_t img_cancel_width;
-uint16_t img_cancel_height;
-uint16_t img_tick_width;
-uint16_t img_tick_height;
-uint16_t img_refresh_width;
-uint16_t img_refresh_height;
-uint16_t img_keypad_width;
-uint16_t img_keypad_height;
-uint16_t img_keyboard_width;
-uint16_t img_keyboard_height;
-uint16_t img_media_width;
-uint16_t img_media_height;
-//@}
 
 /**
  @brief Free RAM_DL after custom images.
@@ -94,6 +73,8 @@ void eve_ui_setup()
 	EVE_Init();
 
 	eve_ui_calibrate();
+	
+	init_ram_g();
 }
 
 void eve_ui_splash(char *toast)

@@ -41,34 +41,135 @@
  * ============================================================================
  */
 
-#include "eve_ui.h"
+#include "EVE_config.h"
+#include "EVE.h"
 
-uint32_t eve_ui_load_font(const uint8_t *font_data, uint32_t font_size, uint8_t handle, uint32_t start_addr)
+#include "eve_ui.h"
+#include "eve_ram_g.h"
+
+static const EVE_GPU_FONT_HEADER *font_pm_pointers[32] = {0};
+
+uint8_t eve_ui_font_header(uint8_t font_handle, EVE_GPU_FONT_HEADER *font_hdr)
+{
+	uint32_t font_root;
+	uint32_t font_offset;
+
+	if (font_handle < 32)
+	{
+		if (font_pm_pointers[font_handle])
+		{
+			memcpy(font_hdr, font_pm_pointers[font_handle], sizeof(EVE_GPU_FONT_HEADER));
+			return 0;
+		}
+		else if (font_handle >= 16)
+		{
+			EVE_LIB_ReadDataFromRAMG((void *)&font_root, sizeof(uint32_t), EVE_ROMFONT_TABLEADDRESS);
+
+			font_offset = font_root + ((font_handle - 16) * sizeof(EVE_GPU_FONT_HEADER));
+			EVE_LIB_ReadDataFromRAMG((void *)font_hdr, sizeof(EVE_GPU_FONT_HEADER), font_offset);
+
+			return 0;
+		}
+	}
+	return -1;
+}
+
+uint8_t eve_ui_font_size(uint8_t font_handle, uint16_t *width, uint16_t *height)
+{
+	EVE_GPU_FONT_HEADER font_hdr;
+
+	if (eve_ui_font_header(font_handle, &font_hdr) == 0)
+	{
+		*width = font_hdr.FontWidthInPixels;
+		*height = font_hdr.FontHeightInPixels;
+		return 0;
+	}
+	return -1;
+}
+
+uint8_t eve_ui_font_char_width(uint8_t font_handle, char ch)
+{
+	EVE_GPU_FONT_HEADER font_hdr;
+	uint8_t width = 0;
+
+	if (eve_ui_font_header(font_handle, &font_hdr) == 0)
+	{
+		width = font_hdr.FontWidth[(int)ch];
+	}
+	return width;
+}
+
+uint8_t eve_ui_font_string_width(uint8_t font_handle, const char *str)
+{
+	EVE_GPU_FONT_HEADER font_hdr;
+	uint16_t width = 0;
+	const char *ch = str;
+
+	if (eve_ui_font_header(font_handle, &font_hdr) == 0)
+	{
+		while (*ch)
+		{
+			if (*ch < 128)
+			{
+				width += font_hdr.FontWidth[(int)*ch];
+			}
+			ch++;
+		}
+	}
+	return width;
+}
+
+static uint32_t eve_ui_load_fontx(uint8_t first, const uint8_t *font_data, uint32_t font_size, uint8_t font_handle)
 {
 	const EVE_GPU_FONT_HEADER *font_hdr = (EVE_GPU_FONT_HEADER *)font_data;
+	uint32_t font_offset;
 
-	eve_ui_arch_write_ram_from_pm(font_data, font_size, start_addr);
+	font_offset = malloc_ram_g(font_size);
+	if (font_offset)
+	{
+		if (font_handle < 32)
+		{
+			font_pm_pointers[font_handle] = font_hdr;
 
-	EVE_LIB_BeginCoProList();
-	EVE_CMD_DLSTART();
-	EVE_CLEAR(1,1,1);
-	EVE_COLOR_RGB(255, 255, 255);
-	EVE_BEGIN(EVE_BEGIN_BITMAPS);
-	EVE_BITMAP_HANDLE(handle);
-	EVE_BITMAP_HANDLE(handle);
-	EVE_BITMAP_SOURCE(font_hdr->PointerToFontGraphicsData);
-	EVE_BITMAP_LAYOUT(font_hdr->FontBitmapFormat,
-			font_hdr->FontLineStride, font_hdr->FontHeightInPixels);
-	EVE_BITMAP_SIZE(EVE_FILTER_NEAREST, EVE_WRAP_BORDER, EVE_WRAP_BORDER,
-			font_hdr->FontWidthInPixels,
-			font_hdr->FontHeightInPixels);
-	EVE_CMD_SETFONT(handle, start_addr);
-	EVE_END();
+			eve_ui_arch_write_ram_from_pm((const uint8_t *)font_hdr, font_size, font_offset);
 
-	EVE_DISPLAY();
-	EVE_CMD_SWAP();
-	EVE_LIB_EndCoProList();
-	EVE_LIB_AwaitCoProEmpty();
+			EVE_LIB_BeginCoProList();
+			EVE_CMD_DLSTART();
+			EVE_BEGIN(EVE_BEGIN_BITMAPS);
+			EVE_BITMAP_HANDLE(font_handle);
+			EVE_BITMAP_SOURCE(font_offset + sizeof(EVE_GPU_FONT_HEADER)
+					- font_hdr->FontLineStride * font_hdr->FontHeightInPixels);
+			EVE_BITMAP_LAYOUT(font_hdr->FontBitmapFormat,
+					font_hdr->FontLineStride, font_hdr->FontHeightInPixels);
+			EVE_BITMAP_SIZE(EVE_FILTER_NEAREST, EVE_WRAP_BORDER, EVE_WRAP_BORDER,
+					font_hdr->FontWidthInPixels,
+					font_hdr->FontHeightInPixels);
+			if (first == 0)
+			{
+				EVE_CMD_SETFONT(font_handle, font_offset);
+			}
+			else
+			{
+				EVE_CMD_SETFONT2(font_handle, font_offset, first);
+			}
+			EVE_END();
 
-	return ((font_size + start_addr) + 16) & (~15);
+			EVE_DISPLAY();
+			EVE_CMD_SWAP();
+			EVE_LIB_EndCoProList();
+			EVE_LIB_AwaitCoProEmpty();
+		}
+	}
+
+	return font_offset;
+}
+
+uint32_t eve_ui_load_font(const uint8_t *font_data, uint32_t font_size, uint8_t font_handle)
+{
+	return eve_ui_load_fontx(0, font_data, font_size, font_handle);
+}
+
+uint32_t eve_ui_load_font2(uint8_t first, const uint8_t *font_data, uint32_t font_size, uint8_t font_handle)
+{
+	return eve_ui_load_fontx(first, font_data, font_size, font_handle);
 }
