@@ -91,16 +91,24 @@ uint32_t img_end_address;
 
 void eve_ui_setup()
 {
-	uint32_t img_address;
-
 	EVE_Init();
 
 	eve_ui_calibrate();
+}
 
-	img_address = eve_ui_load_fonts();
-	// Decode JPEG images from flash into RAM_DL on FT8xx.
-	// Start at RAM_G after fonts (as font addresses must be fixed).
-	img_end_address = eve_ui_load_images(img_address);
+void eve_ui_splash(char *toast)
+{
+	EVE_LIB_BeginCoProList();
+	EVE_CMD_DLSTART();
+	EVE_CLEAR_COLOR_RGB(0, 0, 0);
+	EVE_CLEAR(1,1,1);
+	EVE_COLOR_RGB(255, 255, 255);
+	EVE_CMD_TEXT(EVE_DISP_WIDTH/2, EVE_DISP_HEIGHT/2,
+			28, EVE_OPT_CENTERX | EVE_OPT_CENTERY, toast);
+	EVE_DISPLAY();
+	EVE_CMD_SWAP();
+	EVE_LIB_EndCoProList();
+	EVE_LIB_AwaitCoProEmpty();
 }
 
 void eve_ui_wait(void)
@@ -108,13 +116,13 @@ void eve_ui_wait(void)
 	uint8_t key_code = 0;
 	uint8_t key_detect = 0;
 
-	eve_ui_splash("Waiting for host...", 0);
+	eve_ui_splash("Waiting for host...");
 
 	key_detect = eve_ui_read_tag(&key_code);
 	if (key_detect)
 	{
 	}
-	sleep_ms(100);
+	eve_ui_arch_sleepms(100);
 }
 
 void eve_ui_calibrate()
@@ -131,7 +139,7 @@ void eve_ui_calibrate()
 		EVE_CLEAR(1,1,1);
 		EVE_COLOR_RGB(255, 255, 255);
 		EVE_CMD_TEXT(EVE_DISP_WIDTH/2, EVE_DISP_HEIGHT/2,
-				FONT_HEADER, EVE_OPT_CENTERX | EVE_OPT_CENTERY,
+				28, EVE_OPT_CENTERX | EVE_OPT_CENTERY,
 				"Please tap on the dots");
 		EVE_CMD_CALIBRATE(0);
 		EVE_LIB_EndCoProList();
@@ -177,98 +185,10 @@ void eve_ui_screenshot()
 	}
 	printf("ARGB end\n"); // Marker to identify the end of the image.
 
-	eve_ui_splash("Screenshot completed...", 0);
+	eve_ui_splash("Screenshot completed...");
 	eve_ui_arch_sleepms(2000);
 
 #endif // ENABLE_SCREENSHOT
-}
-
-void eve_ui_header_bar(uint32_t options)
-{
-	uint32_t x = EVE_SPACER;
-
-	EVE_TAG(TAG_NO_ACTION);
-	EVE_COLOR_RGB(128, 128, 128);
-	EVE_BEGIN(EVE_BEGIN_RECTS);
-	EVE_VERTEX2F(0 * 16, 0 * 16);
-	EVE_VERTEX2F(EVE_DISP_WIDTH * 16, (EVE_DISP_HEIGHT / 8) * 16);
-
-	if (options & EVE_HEADER_LOGO)
-	{
-		EVE_TAG(TAG_LOGO);
-		EVE_BEGIN(EVE_BEGIN_BITMAPS);
-		EVE_VERTEX_TRANSLATE_X(((EVE_DISP_WIDTH/2)-((uint32_t)img_bridgetek_logo_width/2)) * 16);
-		EVE_VERTEX2II(0, 0, BITMAP_BRIDGETEK_LOGO, 0);
-	}
-	EVE_VERTEX_TRANSLATE_Y(EVE_SPACER * 16);
-	if (options & EVE_HEADER_SETTINGS_BUTTON)
-	{
-		EVE_TAG(TAG_SETTINGS);
-		EVE_BEGIN(EVE_BEGIN_BITMAPS);
-		EVE_VERTEX_TRANSLATE_X(x * 16);
-		EVE_VERTEX2II(0, 0, BITMAP_SETTINGS, 0);
-		x += (img_settings_width + EVE_SPACER);
-	}
-	if (options & EVE_HEADER_REFRESH_BUTTON)
-	{
-		EVE_TAG(TAG_REFRESH);
-		EVE_BEGIN(EVE_BEGIN_BITMAPS);
-		EVE_VERTEX_TRANSLATE_X(x * 16);
-		EVE_VERTEX2II(0, 0, BITMAP_REFRESH, 0);
-		x += (img_refresh_width + EVE_SPACER);
-	}
-	if (options & EVE_HEADER_CANCEL_BUTTON)
-	{
-		EVE_TAG(TAG_CANCEL);
-		EVE_BEGIN(EVE_BEGIN_BITMAPS);
-		EVE_VERTEX_TRANSLATE_X(x * 16);
-		EVE_VERTEX2II(0, 0, BITMAP_CANCEL, 0);
-		x += (img_cancel_width + EVE_SPACER);
-	}
-	if (options & EVE_HEADER_SAVE_BUTTON)
-	{
-		EVE_TAG(TAG_SAVE);
-		EVE_BEGIN(EVE_BEGIN_BITMAPS);
-		EVE_VERTEX_TRANSLATE_X(x * 16);
-		EVE_VERTEX2II(0, 0, BITMAP_SAVE, 0);
-		x += (img_tick_width + EVE_SPACER);
-	}
-
-	x = EVE_DISP_WIDTH - EVE_SPACER;
-	if (options & EVE_HEADER_KEYPAD_BUTTON)
-	{
-		EVE_TAG(TAG_KEYPAD);
-		EVE_BEGIN(EVE_BEGIN_BITMAPS);
-		x -= (img_keypad_width + EVE_SPACER);
-		EVE_VERTEX_TRANSLATE_X(x * 16);
-		EVE_VERTEX2II(0, 0, BITMAP_KEYPAD, 0);
-	}
-	if (options & EVE_HEADER_KEYBOARD_BUTTON)
-	{
-		EVE_TAG(TAG_KEYBOARD);
-		EVE_BEGIN(EVE_BEGIN_BITMAPS);
-		x -= (img_keyboard_width + EVE_SPACER);
-		EVE_VERTEX_TRANSLATE_X(x * 16);
-		EVE_VERTEX2II(0, 0, BITMAP_KEYBOARD, 0);
-	}
-	if (options & EVE_HEADER_EXTRA_BUTTON)
-	{
-		EVE_TAG(TAG_MEDIA);
-		EVE_BEGIN(EVE_BEGIN_BITMAPS);
-		x -= (img_media_width + EVE_SPACER);
-		EVE_VERTEX_TRANSLATE_X(x * 16);
-		EVE_VERTEX2II(0, 0, BITMAP_MEDIA, 0);
-	}
-	if (options & EVE_HEADER_SPECIAL_BUTTON)
-	{
-		EVE_TAG(TAG_SPECIAL);
-		EVE_BEGIN(EVE_BEGIN_BITMAPS);
-		x -= (img_tick_width + EVE_SPACER);
-		EVE_VERTEX_TRANSLATE_X(x * 16);
-		EVE_VERTEX2II(0, 0, BITMAP_SAVE, 0);
-	}
-	EVE_VERTEX_TRANSLATE_X(0);
-	EVE_VERTEX_TRANSLATE_Y(0);
 }
 
 void eve_ui_play_sound(uint8_t sound, uint8_t volume)
@@ -292,23 +212,5 @@ uint8_t eve_ui_read_tag(uint8_t *key)
 	}
 
 	return key_detect;
-}
-
-void eve_ui_splash(char *toast, uint32_t options)
-{
-	EVE_LIB_BeginCoProList();
-	EVE_CMD_DLSTART();
-	EVE_CLEAR_COLOR_RGB(0, 0, 0);
-	EVE_CLEAR(1,1,1);
-	//EVE_CLEAR_TAG(TAG_NO_ACTION);
-	EVE_COLOR_RGB(255, 255, 255);
-	eve_ui_header_bar(EVE_HEADER_LOGO);
-	EVE_CMD_TEXT(EVE_DISP_WIDTH/2, EVE_DISP_HEIGHT/2,
-			FONT_HEADER, EVE_OPT_CENTERX | EVE_OPT_CENTERY, toast);
-	//eve_ui_header_bar(options);
-	EVE_DISPLAY();
-	EVE_CMD_SWAP();
-	EVE_LIB_EndCoProList();
-	EVE_LIB_AwaitCoProEmpty();
 }
 

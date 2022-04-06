@@ -1,5 +1,5 @@
 /**
-  @file eve_ui_ft9xx.c
+  @file eve_ui_mcu_rp2040.c
  */
 /*
  * ============================================================================
@@ -41,9 +41,16 @@
  * ============================================================================
  */
 
+// Guard against being used for incorrect CPU type.
+#if defined(PLATFORM_RP2040)
+
 /* INCLUDES ************************************************************************/
 
 #include "eve_ui.h"
+
+#include "pico/stdlib.h"
+#include "hardware/flash.h"
+#include "hardware/sync.h"
 
 /* CONSTANTS ***********************************************************************/
 
@@ -51,12 +58,6 @@
  * @brief Location in flash to store touchscreen configuration.
  */
 #define FLASH_OFFSET_CONFIG (256 * 1024)
-
-/**
- @brief Key for identifying if touchscreen calibration values are programmed into
- datalogger memory in the Flash.
- */
-#define VALID_KEY_TOUCHSCREEN 0xd72f91a3
 
 /* GLOBAL VARIABLES ****************************************************************/
 
@@ -216,3 +217,5 @@ void eve_ui_arch_sleepms(uint32_t ms)
 }
 
 /* FUNCTIONS ***********************************************************************/
+
+#endif /* defined(PLATFORM_RP2040) */

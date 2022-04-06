@@ -68,6 +68,7 @@
 
 #include "EVE.h"
 #include "eve_ui.h"
+#include "eve_ui_keyboard.h"
 
 /** @name Key Scancode Definitions
  * @details Special key definitions for virtual keypad. These map

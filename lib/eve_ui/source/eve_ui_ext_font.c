@@ -43,33 +43,26 @@
 
 #include "eve_ui.h"
 
-const uint32_t font0_offset = 0; // Location in EVE memory to start fonts.
-
-// Extern links to fonts which are used here.
-extern const uint8_t font_arial_ttf_15_L4[];
-extern const uint32_t font_arial_ttf_15_L4_size;
-
-uint32_t eve_ui_load_fonts(void)
+uint32_t eve_ui_load_font(const uint8_t *font_data, uint32_t font_size, uint8_t handle, uint32_t start_addr)
 {
-	const EVE_GPU_FONT_HEADER *font0_hdr = (EVE_GPU_FONT_HEADER *)font_arial_ttf_15_L4;
-	uint32_t font0_size = font_arial_ttf_15_L4_size;
+	const EVE_GPU_FONT_HEADER *font_hdr = (EVE_GPU_FONT_HEADER *)font_data;
 
-	eve_ui_arch_write_ram_from_pm(font_arial_ttf_15_L4, font0_size, font0_offset);
+	eve_ui_arch_write_ram_from_pm(font_data, font_size, start_addr);
 
 	EVE_LIB_BeginCoProList();
 	EVE_CMD_DLSTART();
 	EVE_CLEAR(1,1,1);
 	EVE_COLOR_RGB(255, 255, 255);
 	EVE_BEGIN(EVE_BEGIN_BITMAPS);
-	EVE_BITMAP_HANDLE(FONT_CUSTOM_EXTENDED);
-	EVE_BITMAP_HANDLE(FONT_CUSTOM_EXTENDED);
-	EVE_BITMAP_SOURCE(font0_hdr->PointerToFontGraphicsData);
-	EVE_BITMAP_LAYOUT(font0_hdr->FontBitmapFormat,
-			font0_hdr->FontLineStride, font0_hdr->FontHeightInPixels);
+	EVE_BITMAP_HANDLE(handle);
+	EVE_BITMAP_HANDLE(handle);
+	EVE_BITMAP_SOURCE(font_hdr->PointerToFontGraphicsData);
+	EVE_BITMAP_LAYOUT(font_hdr->FontBitmapFormat,
+			font_hdr->FontLineStride, font_hdr->FontHeightInPixels);
 	EVE_BITMAP_SIZE(EVE_FILTER_NEAREST, EVE_WRAP_BORDER, EVE_WRAP_BORDER,
-			font0_hdr->FontWidthInPixels,
-			font0_hdr->FontHeightInPixels);
-	EVE_CMD_SETFONT(FONT_CUSTOM_EXTENDED, font0_offset);
+			font_hdr->FontWidthInPixels,
+			font_hdr->FontHeightInPixels);
+	EVE_CMD_SETFONT(handle, start_addr);
 	EVE_END();
 
 	EVE_DISPLAY();
@@ -77,5 +70,5 @@ uint32_t eve_ui_load_fonts(void)
 	EVE_LIB_EndCoProList();
 	EVE_LIB_AwaitCoProEmpty();
 
-	return ((font0_size + font0_offset) + 16) & (~15);
+	return ((font_size + start_addr) + 16) & (~15);
 }
