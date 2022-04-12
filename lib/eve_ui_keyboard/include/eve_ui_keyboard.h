@@ -58,12 +58,11 @@ extern "C" {
 
 /**
  @brief Custom font and bitmap definitions.
- @details These utilise handles 0 to 14.
  */
 //@{
 #define FONT_HEADER 28
 #define FONT_BODY 27
-#define FONT_CUSTOM 27
+#define KEYBOARD_FONT 27
 #define BITMAP_BRIDGETEK_LOGO 8
 #define BITMAP_MEDIA 7
 #define BITMAP_SETTINGS 6
@@ -72,7 +71,7 @@ extern "C" {
 #define BITMAP_REFRESH 3
 #define BITMAP_KEYPAD 2
 #define BITMAP_KEYBOARD 1
-#define FONT_CUSTOM_EXTENDED 0
+#define KEYBOARD_FONT_EXTENDED 0
 //@}
 
 /**

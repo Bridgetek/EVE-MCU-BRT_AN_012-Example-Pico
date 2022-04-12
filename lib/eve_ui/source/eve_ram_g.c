@@ -2,6 +2,7 @@
  * eve_ram_g.c
  *
  *  Created on: 20 Nov 2017
+ *      Author: Gordon.McNab
  */
 
 #include "stdint.h"
@@ -13,15 +14,20 @@
 
 #include "eve_ram_g.h"
 
-void init_ram_g()
+static uint32_t start_addr = 0;
+
+void init_ram_g(uint32_t offset)
 {
 	// Write size of free area to first dword of RAM_G.
 	// This is the entirety of RAM_G (EVE_RAM_G_SIZE).
-	uint32_t ptr = EVE_RAM_G_SIZE - sizeof(uint32_t);
+	uint32_t ptr;
+	
+	start_addr = ((offset + 3) & (~3));
+	ptr = EVE_RAM_G_SIZE - sizeof(uint32_t) - start_addr;
 
-	EVE_LIB_WriteDataToRAMG((uint8_t *)&ptr, sizeof(uint32_t), 0);
+	EVE_LIB_WriteDataToRAMG((uint8_t *)&ptr, sizeof(uint32_t), start_addr);
 
-	DEBUG_RAMG_MALLOC("RAM_G memory init %x\r\n", ptr);
+	DEBUG_RAMG_MALLOC("RAM_G memory (0x%x) init %x\r\n", start_addr, ptr);
 }
 
 uint32_t malloc_ram_g(size_t size)
@@ -29,10 +35,12 @@ uint32_t malloc_ram_g(size_t size)
 	uint32_t ptr = 0;
 	uint32_t blocklen;
 	uint32_t nextblock = 0;
-	uint32_t currblock = 0;
+	uint32_t currblock = start_addr;
 	uint32_t marker;
+	uint32_t block_size;
 
-	DEBUG_RAMG_MALLOC("RAM_G memory malloc bytes %d\r\n", size);
+	block_size = ((size + 4) & (~3));
+	DEBUG_RAMG_MALLOC("RAM_G memory (0x%x) malloc bytes %d\r\n", start_addr, block_size);
 	do
 	{
 		EVE_LIB_ReadDataFromRAMG((uint8_t *)&marker, sizeof(uint32_t), currblock);
@@ -48,15 +56,15 @@ uint32_t malloc_ram_g(size_t size)
 		{
 			DEBUG_RAMG_MALLOC("RAM_G memory malloc found %d bytes\r\n", blocklen);
 			// High bit clear. Can use or subdivide this block.
-			if (blocklen >= size)
+			if (blocklen >= block_size)
 			{
 				ptr = currblock + sizeof(uint32_t);
 
 				// Create new marker for this block. High bit set.
-				marker = size | (1<<31);
+				marker = block_size | (1<<31);
 				EVE_LIB_WriteDataToRAMG((uint8_t *)&marker, sizeof(uint32_t), currblock);
 				DEBUG_RAMG_MALLOC("RAM_G memory malloc reserved 0x%x at 0x%x\r\n", marker, currblock);
-				currblock += (sizeof(uint32_t) + size);
+				currblock += (sizeof(uint32_t) + block_size);
 
 				if (currblock != nextblock)
 				{
@@ -81,10 +89,10 @@ void free_ram_g(uint32_t addr)
 {
 	uint32_t blocklen;
 	uint32_t nextblock = 0;
-	uint32_t currblock = 0;
+	uint32_t currblock = start_addr;
 	uint32_t marker;
 
-	DEBUG_RAMG_MALLOC("RAM_G memory free 0x%x\r\n", addr);
+	DEBUG_RAMG_MALLOC("RAM_G memory (0x%x) free at 0x%x\r\n", start_addr, addr);
 	do
 	{
 		EVE_LIB_ReadDataFromRAMG((uint8_t *)&marker, sizeof(uint32_t), currblock);

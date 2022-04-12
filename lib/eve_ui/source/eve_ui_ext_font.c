@@ -122,54 +122,101 @@ uint8_t eve_ui_font_string_width(uint8_t font_handle, const char *str)
 static uint32_t eve_ui_load_fontx(uint8_t first, const uint8_t *font_data, uint32_t font_size, uint8_t font_handle)
 {
 	const EVE_GPU_FONT_HEADER *font_hdr = (EVE_GPU_FONT_HEADER *)font_data;
-	uint32_t font_offset;
+	uint32_t hdr_addr;
+	uint32_t end_addr = 0;
+	int32_t bmp_offset;
 
-	font_offset = malloc_ram_g(font_size);
-	if (font_offset)
+	if ((font_data) && (font_size))
 	{
 		if (font_handle < 32)
 		{
-			font_pm_pointers[font_handle] = font_hdr;
-
-			eve_ui_arch_write_ram_from_pm((const uint8_t *)font_hdr, font_size, font_offset);
-
-			EVE_LIB_BeginCoProList();
-			EVE_CMD_DLSTART();
-			EVE_BEGIN(EVE_BEGIN_BITMAPS);
-			EVE_BITMAP_HANDLE(font_handle);
-			EVE_BITMAP_SOURCE(font_offset + sizeof(EVE_GPU_FONT_HEADER)
-					- font_hdr->FontLineStride * font_hdr->FontHeightInPixels);
-			EVE_BITMAP_LAYOUT(font_hdr->FontBitmapFormat,
-					font_hdr->FontLineStride, font_hdr->FontHeightInPixels);
-			EVE_BITMAP_SIZE(EVE_FILTER_NEAREST, EVE_WRAP_BORDER, EVE_WRAP_BORDER,
-					font_hdr->FontWidthInPixels,
-					font_hdr->FontHeightInPixels);
-			if (first == 0)
+			// Enforce alignment.
+			hdr_addr = malloc_ram_g(font_size);
+			if (hdr_addr)
 			{
-				EVE_CMD_SETFONT(font_handle, font_offset);
-			}
-			else
-			{
-				EVE_CMD_SETFONT2(font_handle, font_offset, first);
-			}
-			EVE_END();
+				if (first == 0)
+				{
+					bmp_offset = hdr_addr + sizeof(EVE_GPU_FONT_HEADER)
+								- (1 * font_hdr->FontLineStride * font_hdr->FontHeightInPixels);
+				}
+				else
+				{
+					bmp_offset = hdr_addr + sizeof(EVE_GPU_FONT_HEADER)
+								- (1 * font_hdr->FontLineStride * font_hdr->FontHeightInPixels);
+				}
+		printf("first: %d\r\n", first);
+		printf("stride: 0x%x\r\nheight: 0x%x\r\n", font_hdr->FontLineStride, font_hdr->FontHeightInPixels);
+		printf("hdr_addr: 0x%x\r\nbmp_offset: 0x%x\r\n", hdr_addr, bmp_offset);
+				// Calculate the end of the area occupied by the font in RAM_G.
+				end_addr = hdr_addr + font_size;
+				// Store a pointer to the font header in the lookup array.
+				font_pm_pointers[font_handle] = (EVE_GPU_FONT_HEADER *)font_data;
 
-			EVE_DISPLAY();
-			EVE_CMD_SWAP();
-			EVE_LIB_EndCoProList();
-			EVE_LIB_AwaitCoProEmpty();
+				eve_ui_arch_write_ram_from_pm((const uint8_t *)font_hdr, font_size, hdr_addr);
+				// For EVE_CMD_SETFONT update the pointer to font graphics data.
+				uint8_t font_gd[sizeof(uint32_t)];
+				font_gd[0] = (bmp_offset >> 0) & 0xff;
+				font_gd[1] = (bmp_offset >> 8) & 0xff;
+				font_gd[2] = (bmp_offset >> 16) & 0xff;
+				font_gd[3] = (bmp_offset >> 24) & 0xff;
+		printf("%d %d %d %d\r\n", font_gd[0], font_gd[1], font_gd[2], font_gd[3]);
+				EVE_LIB_WriteDataToRAMG(font_gd, sizeof(uint32_t), 
+						hdr_addr + offsetof(EVE_GPU_FONT_HEADER, PointerToFontGraphicsData));
+uint8_t check[164];
+EVE_LIB_ReadDataFromRAMG(check, 164, 0);
+int i;
+for (i = 0; i < 164; i++)
+{
+	if (i%16 == 0) printf("\r\n%04x: ", i);
+	printf("%02x ", check[i]);
+}
+printf("\r\n");
+printf("bitmap source: 0x%x\r\n", EVE_ENC_BITMAP_SOURCE((int32_t)bmp_offset));
+
+				EVE_LIB_BeginCoProList();
+				EVE_CMD_DLSTART();
+				EVE_BEGIN(EVE_BEGIN_BITMAPS);
+				EVE_BITMAP_HANDLE(font_handle);
+				//printf("EVE_ENC_BITMAP_SOURCE %x\r\n", EVE_ENC_BITMAP_SOURCE(bmp_offset));
+				//EVE_BITMAP_SOURCE(bmp_offset);
+				EVE_BITMAP_SIZE(EVE_FILTER_NEAREST, EVE_WRAP_BORDER, EVE_WRAP_BORDER,
+						font_hdr->FontWidthInPixels,
+						font_hdr->FontHeightInPixels);
+				EVE_BITMAP_LAYOUT(font_hdr->FontBitmapFormat,
+						font_hdr->FontLineStride, font_hdr->FontHeightInPixels);
+				if (first == 0)
+				{
+					EVE_BITMAP_SOURCE(hdr_addr + sizeof(EVE_GPU_FONT_HEADER)
+							- (1 * font_hdr->FontLineStride * font_hdr->FontHeightInPixels));
+					EVE_CMD_SETFONT(font_handle, hdr_addr);
+				}
+				else
+				{
+					EVE_BITMAP_SOURCE(hdr_addr + sizeof(EVE_GPU_FONT_HEADER)
+							- (first * font_hdr->FontLineStride * font_hdr->FontHeightInPixels));
+					EVE_CMD_SETFONT2(font_handle, hdr_addr, first);
+				}
+				EVE_END();
+
+				EVE_DISPLAY();
+				EVE_CMD_SWAP();
+				EVE_LIB_EndCoProList();
+				EVE_LIB_AwaitCoProEmpty();
+			}
 		}
 	}
 
-	return font_offset;
+	return end_addr;
 }
 
 uint32_t eve_ui_load_font(const uint8_t *font_data, uint32_t font_size, uint8_t font_handle)
 {
+	// Use CMD_SETFONT.
 	return eve_ui_load_fontx(0, font_data, font_size, font_handle);
 }
 
 uint32_t eve_ui_load_font2(uint8_t first, const uint8_t *font_data, uint32_t font_size, uint8_t font_handle)
 {
+	// Use CMD_SETFONT2.
 	return eve_ui_load_fontx(first, font_data, font_size, font_handle);
 }

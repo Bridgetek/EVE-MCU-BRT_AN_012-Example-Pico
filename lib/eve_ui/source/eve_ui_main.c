@@ -74,7 +74,7 @@ void eve_ui_setup()
 
 	eve_ui_calibrate();
 
-	init_ram_g();
+	init_ram_g(0);
 }
 
 void eve_ui_splash(char *toast)

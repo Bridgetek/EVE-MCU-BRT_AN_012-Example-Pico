@@ -191,6 +191,8 @@ uint32_t eve_ui_load_argb2(const uint8_t *image_data, uint32_t image_size, uint8
 		EVE_CMD_SWAP();
 		EVE_LIB_EndCoProList();
 		EVE_LIB_AwaitCoProEmpty();
+
+		img_offset += (img_width * img_height);
 	}
 
 	return img_offset;
@@ -222,6 +224,8 @@ uint32_t eve_ui_load_argb1555(const uint8_t *image_data, uint32_t image_size, ui
 		EVE_CMD_SWAP();
 		EVE_LIB_EndCoProList();
 		EVE_LIB_AwaitCoProEmpty();
+
+		img_offset += (img_width * img_height);
 	}
 
 	return img_offset;
@@ -300,6 +304,8 @@ uint32_t eve_ui_load_jpg(const uint8_t *image_data, uint8_t handle,
 		EVE_CMD_SWAP();
 		EVE_LIB_EndCoProList();
 		EVE_LIB_AwaitCoProEmpty();
+
+		img_offset += (img_width * img_height);
 	}
 
 	return img_offset;
