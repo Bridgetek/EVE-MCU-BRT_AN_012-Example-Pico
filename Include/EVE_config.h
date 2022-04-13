@@ -57,7 +57,7 @@
 // required. This must be called prior to including FT8xx.h.
 // "#define FT8XX_TYPE BT817" is equivelant to having "#define EVE4_ENABLE".
 #ifndef FT8XX_TYPE
-#define FT8XX_TYPE FT812
+#define FT8XX_TYPE BT817
 #endif
 
 // Definitions used for target display resolution selection
@@ -73,6 +73,14 @@
 #ifdef QUADSPI_ENABLE
 #undef QUADSPI_ENABLE
 #endif
+
+// For IDM2040 SPI bus 0 on pins GPIO2 to GPIO5
+#define RP2040_SPI spi0
+#define RP2040_SPI_SCK 2
+#define RP2040_SPI_MOSI 3
+#define RP2040_SPI_MISO 4
+#define RP2040_SPI_CS 5
+#define RP2040_SPI_PD 15
 
 // Setup default parameters for various displays.
 // These can be overridden for different display modules.
