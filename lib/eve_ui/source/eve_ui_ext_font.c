@@ -144,9 +144,6 @@ static uint32_t eve_ui_load_fontx(uint8_t first, const uint8_t *font_data, uint3
 					bmp_offset = hdr_addr + sizeof(EVE_GPU_FONT_HEADER)
 								- (1 * font_hdr->FontLineStride * font_hdr->FontHeightInPixels);
 				}
-		printf("first: %d\r\n", first);
-		printf("stride: 0x%x\r\nheight: 0x%x\r\n", font_hdr->FontLineStride, font_hdr->FontHeightInPixels);
-		printf("hdr_addr: 0x%x\r\nbmp_offset: 0x%x\r\n", hdr_addr, bmp_offset);
 				// Calculate the end of the area occupied by the font in RAM_G.
 				end_addr = hdr_addr + font_size;
 				// Store a pointer to the font header in the lookup array.
@@ -159,19 +156,8 @@ static uint32_t eve_ui_load_fontx(uint8_t first, const uint8_t *font_data, uint3
 				font_gd[1] = (bmp_offset >> 8) & 0xff;
 				font_gd[2] = (bmp_offset >> 16) & 0xff;
 				font_gd[3] = (bmp_offset >> 24) & 0xff;
-		printf("%d %d %d %d\r\n", font_gd[0], font_gd[1], font_gd[2], font_gd[3]);
 				EVE_LIB_WriteDataToRAMG(font_gd, sizeof(uint32_t), 
 						hdr_addr + offsetof(EVE_GPU_FONT_HEADER, PointerToFontGraphicsData));
-uint8_t check[164];
-EVE_LIB_ReadDataFromRAMG(check, 164, 0);
-int i;
-for (i = 0; i < 164; i++)
-{
-	if (i%16 == 0) printf("\r\n%04x: ", i);
-	printf("%02x ", check[i]);
-}
-printf("\r\n");
-printf("bitmap source: 0x%x\r\n", EVE_ENC_BITMAP_SOURCE((int32_t)bmp_offset));
 
 				EVE_LIB_BeginCoProList();
 				EVE_CMD_DLSTART();
