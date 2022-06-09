@@ -44,9 +44,11 @@
 /* INCLUDES ************************************************************************/
 
 #include "eve_ui.h"
+#include "eve_ram_g.h"
+#include "eve_ui_keyboard.h"
 
-#define USE_EXTRA_SCREEN
-#define USE_SPECIAL_SCREEN
+#undef USE_EXTRA_SCREEN
+#undef USE_SPECIAL_SCREEN
 
 /**
  * @brief Keyboard colours.
@@ -63,22 +65,6 @@
 #define PACK __attribute__((__packed__))
 
 /**
- * @brief Keyboard screen components to show on display.
- */
-//@{
-#define KEYBOARD_COMPONENTS_ALPHANUMERIC (1 << 0)	 // Show keyboard/keypad
-#define KEYBOARD_COMPONENTS_FUNCTION (1 << 1)		 // F1 to F12
-#define KEYBOARD_COMPONENTS_MODIFIERS (1 << 2)		 // Ctrl, Alt keys etc
-#define KEYBOARD_COMPONENTS_LEDS (1 << 3)			 // Scroll, Num and Caps Lock LEDs
-#define KEYBOARD_COMPONENTS_TOAST (1 << 4)			 // Toast (announcement area)
-#define KEYBOARD_COMPONENTS_EDIT (1 << 5)			 // Edit area
-#define KEYBOARD_COMPONENTS_KEYPAD_DOT (1 << 11)	 // Keypad .
-#define KEYBOARD_COMPONENTS_KEYPAD_CONTROL (1 << 13) // Keypad control items (Ins, Home, arrows etc)
-#define KEYBOARD_COMPONENTS_KEYPAD_ARITH (1 << 14)	 // Keypad arithmetic operators
-#define KEYBOARD_COMPONENTS_FULL (0xffff)
-//@}
-
-/**
  * @brief Simple state values for detecting a keypress and acting on it.
  * @details A modifier key will only affect the next scan code sent in this
  * example. However, a scan key will send a report to the host.
@@ -90,33 +76,6 @@
 #define KEY_PRESS_NONE 0
 #define KEY_PRESS_MODIFIER 1
 #define KEY_PRESS_SCAN 2
-//@}
-
-/**
- * @brief Keyboard layout to show on keyboard/keypad section of display.
- */
-//@{
-#define KEYBOARD_LAYOUT_PC_US_ALPHA 1
-#define KEYBOARD_LAYOUT_PC_UK_ALPHA 2
-#define KEYBOARD_LAYOUT_PC_DE_ALPHA 3
-//@}
-
-/**
- * @brief Keyboard screen to show on keyboard/keypad section of display.
- */
-//@{
-#define KEYBOARD_SCREEN_SETTINGS 0
-#define KEYBOARD_SCREEN_ALPHANUMERIC 1
-#define KEYBOARD_SCREEN_KEYPAD 2
-#define KEYBOARD_SCREEN_EXTRA 3
-#define KEYBOARD_SCREEN_SPECIAL 4
-//@}
-
-/**
- @brief Fonts used for keyboard display.
- */
-#define KEYBOARD_FONT FONT_CUSTOM
-#define KEYBOARD_FONT_ALT FONT_CUSTOM_EXTENDED
 //@}
 
 /** @name Display section definitions.
@@ -330,9 +289,138 @@ static const uint8_t keymap_bot_row_us[] = {
 };
 //@}
 
+/**
+ @brief Dimensions of custom images.
+ */
+//@{
+uint16_t img_bridgetek_logo_width = 0;
+uint16_t img_bridgetek_logo_height = 0;
+uint16_t img_settings_width = 0;
+uint16_t img_settings_height = 0;
+uint16_t img_cancel_width = 0;
+uint16_t img_cancel_height = 0;
+uint16_t img_tick_width = 0;
+uint16_t img_tick_height = 0;
+uint16_t img_refresh_width = 0;
+uint16_t img_refresh_height = 0;
+uint16_t img_keypad_width = 0;
+uint16_t img_keypad_height = 0;
+uint16_t img_keyboard_width = 0;
+uint16_t img_keyboard_height = 0;
+uint16_t img_media_width = 0;
+uint16_t img_media_height = 0;
+//@}
+
+/**
+ * @brief Extern links to fonts which are used here.
+ */
+extern const uint8_t font_arial_ttf_15_L4[];
+extern const uint32_t font_arial_ttf_15_L4_size;
+/**
+ * @brief Extern links to images which are used here.
+ */
+extern const uint8_t img_bridgetek_logo_jpg[] asm("img_bridgetek_logo_jpg");
+extern const uint8_t img_settings_jpg[] asm("img_settings_jpg");
+extern const uint8_t img_cancel_jpg[] asm("img_cancel_jpg");
+extern const uint8_t img_tick_jpg[] asm("img_z_jpg");
+extern const uint8_t img_refresh_jpg[] asm("img_refresh_jpg");
+extern const uint8_t img_keypad_jpg[] asm("img_keypad_jpg");
+extern const uint8_t img_keyboard_jpg[] asm("img_keyboard_jpg");
+extern const uint8_t img_media_jpg[] asm("img_media_jpg");
+
 /* MACROS **************************************************************************/
 
 /* LOCAL FUNCTIONS / INLINES *******************************************************/
+
+static void eve_ui_keyboard_header_bar(uint32_t options)
+{
+	uint32_t x = EVE_SPACER;
+
+	EVE_TAG(TAG_NO_ACTION);
+	EVE_COLOR_RGB(128, 128, 128);
+	EVE_BEGIN(EVE_BEGIN_RECTS);
+	// Draw a bar across the header area.
+	EVE_VERTEX2F(0 * 16, 0 * 16);
+	// Standard height bar, 1/8 of the screen height.
+	EVE_VERTEX2F(EVE_DISP_WIDTH * 16, (EVE_DISP_HEIGHT / 8) * 16);
+
+	if ((options & EVE_HEADER_LOGO) && img_bridgetek_logo_width)
+	{
+		EVE_TAG(TAG_LOGO);
+		EVE_BEGIN(EVE_BEGIN_BITMAPS);
+		EVE_VERTEX_TRANSLATE_X(((EVE_DISP_WIDTH/2)-((uint32_t)img_bridgetek_logo_width/2)) * 16);
+		EVE_VERTEX2II(0, 0, BITMAP_BRIDGETEK_LOGO, 0);
+	}
+	EVE_VERTEX_TRANSLATE_Y(EVE_SPACER * 16);
+	if ((options & EVE_HEADER_SETTINGS_BUTTON) && img_settings_width)
+	{
+		EVE_TAG(TAG_SETTINGS);
+		EVE_BEGIN(EVE_BEGIN_BITMAPS);
+		EVE_VERTEX_TRANSLATE_X(x * 16);
+		EVE_VERTEX2II(0, 0, BITMAP_SETTINGS, 0);
+		x += (img_settings_width + EVE_SPACER);
+	}
+	if ((options & EVE_HEADER_REFRESH_BUTTON) && img_refresh_width)
+	{
+		EVE_TAG(TAG_REFRESH);
+		EVE_BEGIN(EVE_BEGIN_BITMAPS);
+		EVE_VERTEX_TRANSLATE_X(x * 16);
+		EVE_VERTEX2II(0, 0, BITMAP_REFRESH, 0);
+		x += (img_refresh_width + EVE_SPACER);
+	}
+	if ((options & EVE_HEADER_CANCEL_BUTTON) && img_cancel_width)
+	{
+		EVE_TAG(TAG_CANCEL);
+		EVE_BEGIN(EVE_BEGIN_BITMAPS);
+		EVE_VERTEX_TRANSLATE_X(x * 16);
+		EVE_VERTEX2II(0, 0, BITMAP_CANCEL, 0);
+		x += (img_cancel_width + EVE_SPACER);
+	}
+	if ((options & EVE_HEADER_SAVE_BUTTON) && img_tick_width)
+	{
+		EVE_TAG(TAG_SAVE);
+		EVE_BEGIN(EVE_BEGIN_BITMAPS);
+		EVE_VERTEX_TRANSLATE_X(x * 16);
+		EVE_VERTEX2II(0, 0, BITMAP_SAVE, 0);
+		x += (img_tick_width + EVE_SPACER);
+	}
+
+	x = EVE_DISP_WIDTH - EVE_SPACER;
+	if ((options & EVE_HEADER_KEYPAD_BUTTON) && img_keypad_width)
+	{
+		EVE_TAG(TAG_KEYPAD);
+		EVE_BEGIN(EVE_BEGIN_BITMAPS);
+		x -= (img_keypad_width + EVE_SPACER);
+		EVE_VERTEX_TRANSLATE_X(x * 16);
+		EVE_VERTEX2II(0, 0, BITMAP_KEYPAD, 0);
+	}
+	if ((options & EVE_HEADER_KEYBOARD_BUTTON) && img_keyboard_width)
+	{
+		EVE_TAG(TAG_KEYBOARD);
+		EVE_BEGIN(EVE_BEGIN_BITMAPS);
+		x -= (img_keyboard_width + EVE_SPACER);
+		EVE_VERTEX_TRANSLATE_X(x * 16);
+		EVE_VERTEX2II(0, 0, BITMAP_KEYBOARD, 0);
+	}
+	if ((options & EVE_HEADER_EXTRA_BUTTON) && img_media_width)
+	{
+		EVE_TAG(TAG_MEDIA);
+		EVE_BEGIN(EVE_BEGIN_BITMAPS);
+		x -= (img_media_width + EVE_SPACER);
+		EVE_VERTEX_TRANSLATE_X(x * 16);
+		EVE_VERTEX2II(0, 0, BITMAP_MEDIA, 0);
+	}
+	if ((options & EVE_HEADER_SPECIAL_BUTTON) && img_tick_width)
+	{
+		EVE_TAG(TAG_SPECIAL);
+		EVE_BEGIN(EVE_BEGIN_BITMAPS);
+		x -= (img_tick_width + EVE_SPACER);
+		EVE_VERTEX_TRANSLATE_X(x * 16);
+		EVE_VERTEX2II(0, 0, BITMAP_SAVE, 0);
+	}
+	EVE_VERTEX_TRANSLATE_X(0);
+	EVE_VERTEX_TRANSLATE_Y(0);
+}
 
 static void draw_keypad(uint8_t tag)
 {
@@ -418,7 +506,7 @@ static void draw_keypad(uint8_t tag)
 		EVE_CMD_BUTTON(
 			KEY_COL_KEYPAD(1), KEY_ROW_KEYPAD(4),
 			KEY_WIDTH_KEYPAD(1), KEY_HEIGHT_KEYPAD(1),
-			KEYBOARD_FONT_ALT, EVE_OPT_FLAT, "\x02");
+			KEYBOARD_FONT_EXTENDED, EVE_OPT_FLAT, "\x02");
 
 		button_colour = (tag == TAG_LEFT_ARROW) ? KEY_COLOUR_HIGHLIGHT : KEY_COLOUR_CONTROL;
 		EVE_CMD_FGCOLOR(button_colour);
@@ -426,7 +514,7 @@ static void draw_keypad(uint8_t tag)
 		EVE_CMD_BUTTON(
 			KEY_COL_KEYPAD(0), KEY_ROW_KEYPAD(5),
 			KEY_WIDTH_KEYPAD(1), KEY_HEIGHT_KEYPAD(1),
-			KEYBOARD_FONT_ALT, EVE_OPT_FLAT, "\x01");
+			KEYBOARD_FONT_EXTENDED, EVE_OPT_FLAT, "\x01");
 
 		button_colour = (tag == TAG_DOWN_ARROW) ? KEY_COLOUR_HIGHLIGHT : KEY_COLOUR_CONTROL;
 		EVE_CMD_FGCOLOR(button_colour);
@@ -434,7 +522,7 @@ static void draw_keypad(uint8_t tag)
 		EVE_CMD_BUTTON(
 			KEY_COL_KEYPAD(1), KEY_ROW_KEYPAD(5),
 			KEY_WIDTH_KEYPAD(1), KEY_HEIGHT_KEYPAD(1),
-			KEYBOARD_FONT_ALT, EVE_OPT_FLAT, "\x04");
+			KEYBOARD_FONT_EXTENDED, EVE_OPT_FLAT, "\x04");
 
 		button_colour = (tag == TAG_RIGHT_ARROW) ? KEY_COLOUR_HIGHLIGHT : KEY_COLOUR_CONTROL;
 		EVE_CMD_FGCOLOR(button_colour);
@@ -442,7 +530,7 @@ static void draw_keypad(uint8_t tag)
 		EVE_CMD_BUTTON(
 			KEY_COL_KEYPAD(2), KEY_ROW_KEYPAD(5),
 			KEY_WIDTH_KEYPAD(1), KEY_HEIGHT_KEYPAD(1),
-			KEYBOARD_FONT_ALT, EVE_OPT_FLAT, "\x03");
+			KEYBOARD_FONT_EXTENDED, EVE_OPT_FLAT, "\x03");
 	}
 	else
 	{
@@ -452,7 +540,7 @@ static void draw_keypad(uint8_t tag)
 		EVE_CMD_BUTTON(
 			KEY_COL_KEYPAD(8), KEY_ROW_KEYPAD(1),
 			KEY_WIDTH_KEYPAD(1), KEY_HEIGHT_KEYPAD(1),
-			KEYBOARD_FONT_ALT, EVE_OPT_FLAT, "\x01");
+			KEYBOARD_FONT_EXTENDED, EVE_OPT_FLAT, "\x01");
 	}
 
 	if (keyboard_components & KEYBOARD_COMPONENTS_KEYPAD_CONTROL)
@@ -618,7 +706,7 @@ static void draw_keypad(uint8_t tag)
 		EVE_CMD_BUTTON(
 			KEY_COL_KEYPAD(5), KEY_ROW_KEYPAD(2),
 			KEY_WIDTH_KEYPAD(1), KEY_HEIGHT_KEYPAD(1),
-			KEYBOARD_FONT_ALT, EVE_OPT_FLAT, "\x02");
+			KEYBOARD_FONT_EXTENDED, EVE_OPT_FLAT, "\x02");
 
 		button_colour = (tag == TAG_PAD_9) ? KEY_COLOUR_HIGHLIGHT : KEY_COLOUR_CONTROL;
 		EVE_CMD_FGCOLOR(button_colour);
@@ -634,7 +722,7 @@ static void draw_keypad(uint8_t tag)
 		EVE_CMD_BUTTON(
 			KEY_COL_KEYPAD(4), KEY_ROW_KEYPAD(3),
 			KEY_WIDTH_KEYPAD(1), KEY_HEIGHT_KEYPAD(1),
-			KEYBOARD_FONT_ALT, EVE_OPT_FLAT, "\x01");
+			KEYBOARD_FONT_EXTENDED, EVE_OPT_FLAT, "\x01");
 
 		button_colour = (tag == TAG_PAD_5) ? KEY_COLOUR_HIGHLIGHT : KEY_COLOUR_CONTROL;
 		EVE_CMD_FGCOLOR(button_colour);
@@ -650,7 +738,7 @@ static void draw_keypad(uint8_t tag)
 		EVE_CMD_BUTTON(
 			KEY_COL_KEYPAD(6), KEY_ROW_KEYPAD(3),
 			KEY_WIDTH_KEYPAD(1), KEY_HEIGHT_KEYPAD(1),
-			KEYBOARD_FONT_ALT, EVE_OPT_FLAT, "\x03");
+			KEYBOARD_FONT_EXTENDED, EVE_OPT_FLAT, "\x03");
 
 		button_colour = (tag == TAG_PAD_1) ? KEY_COLOUR_HIGHLIGHT : KEY_COLOUR_CONTROL;
 		EVE_CMD_FGCOLOR(button_colour);
@@ -666,7 +754,7 @@ static void draw_keypad(uint8_t tag)
 		EVE_CMD_BUTTON(
 			KEY_COL_KEYPAD(5), KEY_ROW_KEYPAD(4),
 			KEY_WIDTH_KEYPAD(1), KEY_HEIGHT_KEYPAD(1),
-			KEYBOARD_FONT_ALT, EVE_OPT_FLAT, "\x04");
+			KEYBOARD_FONT_EXTENDED, EVE_OPT_FLAT, "\x04");
 
 		button_colour = (tag == TAG_PAD_3) ? KEY_COLOUR_HIGHLIGHT : KEY_COLOUR_CONTROL;
 		EVE_CMD_FGCOLOR(button_colour);
@@ -699,7 +787,7 @@ static void draw_function_keys(uint8_t tag)
 	uint32_t button_colour;
 	int i;
 
-	if (keyboard_components & KEYBOARD_COMPONENTS_FUNCTION)
+	if (keyboard_components & KEYBOARD_COMPONENTS_ESCAPE)
 	{
 		button_colour = (tag == TAG_ESCAPE) ? KEY_COLOUR_HIGHLIGHT : KEY_COLOUR_CONTROL;
 		EVE_CMD_FGCOLOR(button_colour);
@@ -708,7 +796,10 @@ static void draw_function_keys(uint8_t tag)
 			KEY_COL_ALPHA(0), KEY_ROW_ALPHA(0) + (KEY_HEIGHT_ALPHA * 1) / 6,
 			KEY_WIDTH_ALPHA(1), (KEY_HEIGHT_ALPHA * 2) / 3,
 			KEYBOARD_FONT, EVE_OPT_FLAT, "Esc");
+	}
 
+	if (keyboard_components & KEYBOARD_COMPONENTS_FUNCTION)
+	{
 		for (i = 0; i < 12; i++)
 		{
 			char name[4];
@@ -1098,7 +1189,7 @@ static void draw_keyboard_fixed_keys(uint8_t tag)
 	EVE_CMD_BUTTON(
 		KEY_COL_ALPHA(13), KEY_ROW_ALPHA(1),
 		KEY_WIDTH_ALPHA(2), KEY_HEIGHT_ALPHA,
-		KEYBOARD_FONT_ALT, EVE_OPT_FLAT, "\x01");
+		KEYBOARD_FONT_EXTENDED, EVE_OPT_FLAT, "\x01");
 
 	button_colour = (tag == TAG_TAB) ? KEY_COLOUR_HIGHLIGHT : KEY_COLOUR_CONTROL;
 	EVE_CMD_FGCOLOR(button_colour);
@@ -1108,14 +1199,14 @@ static void draw_keyboard_fixed_keys(uint8_t tag)
 		EVE_CMD_BUTTON(
 			KEY_COL_ALPHA(0), KEY_ROW_ALPHA(2),
 			KEY_WIDTH_ALPHA(1.5), KEY_HEIGHT_ALPHA,
-			KEYBOARD_FONT_ALT, EVE_OPT_FLAT, "\x05\x01");
+			KEYBOARD_FONT_EXTENDED, EVE_OPT_FLAT, "\x05\x01");
 	}
 	else
 	{
 		EVE_CMD_BUTTON(
 			KEY_COL_ALPHA(0), KEY_ROW_ALPHA(2),
 			KEY_WIDTH_ALPHA(1.5), KEY_HEIGHT_ALPHA,
-			KEYBOARD_FONT_ALT, EVE_OPT_FLAT, "\x03\x05");
+			KEYBOARD_FONT_EXTENDED, EVE_OPT_FLAT, "\x03\x05");
 	}
 
 	button_colour = (key_state.Caps) ? KEY_COLOUR_HIGHLIGHT : KEY_COLOUR_CONTROL;
@@ -1227,7 +1318,7 @@ static uint8_t draw_keys(int16_t x, int16_t y,
 		if (cdisp >= 0x80)
 		{
 			// Special encoding in the custom font file
-			use_font = KEYBOARD_FONT_ALT;
+			use_font = KEYBOARD_FONT_EXTENDED;
 			switch (cdisp)
 			{
 			case (uint8_t)'\xAC': // not sign
@@ -1572,24 +1663,24 @@ static void draw_keyboard(const char *toast, uint32_t options, const char *edit,
 		// Draw header bar without unnecessary buttons
 		if (keyboard_screen == KEYBOARD_SCREEN_ALPHANUMERIC)
 		{
-			eve_ui_header_bar(options & (~(EVE_HEADER_KEYBOARD_BUTTON)));
+			eve_ui_keyboard_header_bar(options & (~(EVE_HEADER_KEYBOARD_BUTTON)));
 		}
 		else if (keyboard_screen == KEYBOARD_SCREEN_KEYPAD)
 		{
-			eve_ui_header_bar(options & (~(EVE_HEADER_KEYPAD_BUTTON)));
+			eve_ui_keyboard_header_bar(options & (~(EVE_HEADER_KEYPAD_BUTTON)));
 		}
 		else if (keyboard_screen == KEYBOARD_SCREEN_EXTRA)
 		{
-			eve_ui_header_bar(options & (~(EVE_HEADER_EXTRA_BUTTON)));
+			eve_ui_keyboard_header_bar(options & (~(EVE_HEADER_EXTRA_BUTTON)));
 		}
 		else if (keyboard_screen == KEYBOARD_SCREEN_SPECIAL)
 		{
-			eve_ui_header_bar(options & (~(EVE_HEADER_SPECIAL_BUTTON)));
+			eve_ui_keyboard_header_bar(options & (~(EVE_HEADER_SPECIAL_BUTTON)));
 		}
 	}
 	else // (keyboard_screen == KEYBOARD_SCREEN_SETTINGS)
 	{
-		eve_ui_header_bar(options & (~(EVE_HEADER_KEYBOARD_BUTTON | EVE_HEADER_KEYPAD_BUTTON | EVE_HEADER_EXTRA_BUTTON | EVE_HEADER_SPECIAL_BUTTON)));
+		eve_ui_keyboard_header_bar(options & (~(EVE_HEADER_KEYBOARD_BUTTON | EVE_HEADER_KEYPAD_BUTTON | EVE_HEADER_EXTRA_BUTTON | EVE_HEADER_SPECIAL_BUTTON)));
 	}
 
 	EVE_DISPLAY();
@@ -1813,20 +1904,120 @@ static uint8_t eve_loop(uint8_t *tag)
 
 /* FUNCTIONS ***********************************************************************/
 
-#define KEYBOARD_COMPONENTS (KEYBOARD_COMPONENTS_ALPHANUMERIC | KEYBOARD_COMPONENTS_FUNCTION | KEYBOARD_COMPONENTS_MODIFIERS | KEYBOARD_COMPONENTS_LEDS | KEYBOARD_COMPONENTS_KEYPAD_DOT | KEYBOARD_COMPONENTS_KEYPAD_CONTROL | KEYBOARD_COMPONENTS_KEYPAD_ARITH)
+#define KEYBOARD_COMPONENTS (KEYBOARD_COMPONENTS_ALPHANUMERIC | KEYBOARD_COMPONENTS_FUNCTION | KEYBOARD_COMPONENTS_MODIFIERS | \
+		KEYBOARD_COMPONENTS_ESCAPE | KEYBOARD_COMPONENTS_LEDS | KEYBOARD_COMPONENTS_KEYPAD_DOT | \
+		KEYBOARD_COMPONENTS_KEYPAD_CONTROL | KEYBOARD_COMPONENTS_KEYPAD_ARITH)
 
 #ifndef USE_EXTRA_SCREEN
 #define KEYBOARD_OPTIONS (EVE_HEADER_KEYBOARD_BUTTON | EVE_HEADER_KEYPAD_BUTTON | EVE_HEADER_LOGO | EVE_HEADER_SETTINGS_BUTTON)
 #else
 #ifndef USE_SPECIAL_SCREEN
-#define KEYBOARD_OPTIONS (EVE_HEADER_KEYBOARD_BUTTON | EVE_HEADER_KEYPAD_BUTTON | EVE_HEADER_LOGO | EVE_HEADER_SETTINGS_BUTTON | EVE_HEADER_EXTRA_BUTTON)
+#define KEYBOARD_OPTIONS (EVE_HEADER_KEYBOARD_BUTTON | EVE_HEADER_KEYPAD_BUTTON | EVE_HEADER_LOGO | EVE_HEADER_SETTINGS_BUTTON | \
+		EVE_HEADER_EXTRA_BUTTON)
 #else
-#define KEYBOARD_OPTIONS (EVE_HEADER_KEYBOARD_BUTTON | EVE_HEADER_KEYPAD_BUTTON | EVE_HEADER_LOGO | EVE_HEADER_SETTINGS_BUTTON | EVE_HEADER_EXTRA_BUTTON | EVE_HEADER_SPECIAL_BUTTON)
+#define KEYBOARD_OPTIONS (EVE_HEADER_KEYBOARD_BUTTON | EVE_HEADER_KEYPAD_BUTTON | EVE_HEADER_LOGO | EVE_HEADER_SETTINGS_BUTTON | \
+		EVE_HEADER_EXTRA_BUTTON | EVE_HEADER_SPECIAL_BUTTON)
 #endif // USE_SPECIAL_SCREEN
 #endif // USE_EXTRA_SCREEN
 
+void eve_ui_keyboard_set_layout(uint8_t layout)
+{
+	keyboard_layout = layout;
+}
+
+uint8_t eve_ui_keyboard_get_layout(void)
+{
+	return keyboard_layout;
+}
+
+void eve_ui_keyboard_set_components(uint32_t components)
+{
+	keyboard_components = components;
+}
+
+uint32_t eve_ui_keyboard_get_components(void)
+{
+	return keyboard_components;
+}
+
+void eve_ui_keyboard_set_screen(uint8_t screen)
+{
+	static uint8_t push_screen = KEYBOARD_SCREEN_SETTINGS;
+
+	if ((keyboard_screen == KEYBOARD_SCREEN_SETTINGS)
+			&& (screen == KEYBOARD_SCREEN_SETTINGS))
+	{
+		keyboard_screen = push_screen;
+	}
+	else if (screen == KEYBOARD_SCREEN_SETTINGS)
+	{
+		push_screen = keyboard_screen;
+		keyboard_screen = screen;
+	}
+	else
+	{
+		keyboard_screen = screen;
+	}
+}
+
+uint8_t eve_ui_keyboard_get_screen(void)
+{
+	return keyboard_screen;
+}
+
+void eve_ui_keyboard_splash(char *toast, uint32_t options)
+{
+	EVE_LIB_BeginCoProList();
+	EVE_CMD_DLSTART();
+	EVE_CLEAR_COLOR_RGB(0, 0, 0);
+	EVE_CLEAR(1,1,1);
+	//EVE_CLEAR_TAG(TAG_NO_ACTION);
+	EVE_COLOR_RGB(255, 255, 255);
+	eve_ui_keyboard_header_bar(EVE_HEADER_LOGO);
+	EVE_CMD_TEXT(EVE_DISP_WIDTH/2, EVE_DISP_HEIGHT/2,
+			FONT_HEADER, EVE_OPT_CENTERX | EVE_OPT_CENTERY, toast);
+	//eve_ui_keyboard_header_bar(options);
+	EVE_DISPLAY();
+	EVE_CMD_SWAP();
+	EVE_LIB_EndCoProList();
+	EVE_LIB_AwaitCoProEmpty();
+}
+
 void eve_ui_keyboard_start(void)
 {
+	uint32_t img_address;
+
+	img_address = eve_ui_load_font(font_arial_ttf_15_L4, font_arial_ttf_15_L4_size, KEYBOARD_FONT_EXTENDED);
+
+	// Decode JPEG images from flash into RAM_DL on FT8xx.
+	// Start at RAM_G after fonts (as font addresses must be fixed).
+	init_ram_g(img_address);
+
+	// Load images statically and sequentially.
+	eve_ui_load_jpg(img_bridgetek_logo_jpg, BITMAP_BRIDGETEK_LOGO, 
+				&img_bridgetek_logo_width, &img_bridgetek_logo_height);
+
+	eve_ui_load_jpg(img_settings_jpg, BITMAP_SETTINGS, 
+				&img_settings_width, &img_settings_height);
+
+	eve_ui_load_jpg(img_cancel_jpg, BITMAP_CANCEL, 
+				&img_cancel_width, &img_cancel_height);
+
+	eve_ui_load_jpg(img_tick_jpg, BITMAP_SAVE, 
+				&img_tick_width, &img_tick_height);
+
+	eve_ui_load_jpg(img_refresh_jpg, BITMAP_REFRESH, 
+				&img_refresh_width, &img_refresh_height);
+
+	eve_ui_load_jpg(img_keypad_jpg, BITMAP_KEYPAD, 
+				&img_keypad_width, &img_keypad_height);
+
+	eve_ui_load_jpg(img_keyboard_jpg, BITMAP_KEYBOARD, 
+				&img_keyboard_width, &img_keyboard_height);
+
+	eve_ui_load_jpg(img_media_jpg, BITMAP_MEDIA, 
+				&img_media_width, &img_media_height);
+
 	keyboard_components = KEYBOARD_COMPONENTS;
 	keyboard_screen = KEYBOARD_SCREEN_ALPHANUMERIC;
 
@@ -1838,6 +2029,11 @@ int8_t eve_ui_keyboard_loop(struct key_state *state, uint8_t *tag)
 	uint8_t key_change = 0;
 	uint8_t led_change = 0;
 	uint8_t screen_change = 0;
+	
+	if (*tag == TAG_RESERVED_START)
+	{
+		screen_change = 1;
+	}
 
 	if ((state->Caps != key_state.Caps) || (state->Scroll != key_state.Scroll) || (state->Numeric != key_state.Numeric))
 	{
