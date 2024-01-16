@@ -39,17 +39,17 @@
  * There are no warranties (or similar) in relation to the quality of the
  * Software. You use it at your own risk.
  * The Software should not be used in, or for, any medical device, system or
- * appliance. There are exclusions of FTDI liability for certain types of loss
+ * appliance. There are exclusions of Bridgetek liability for certain types of loss
  * such as: special loss or damage; incidental loss or damage; indirect or
  * consequential loss or damage; loss of income; loss of business; loss of
  * profits; loss of revenue; loss of contracts; business interruption; loss of
  * the use of money or anticipated savings; loss of information; loss of
  * opportunity; loss of goodwill or reputation; and/or loss of, damage to or
  * corruption of data.
- * There is a monetary cap on FTDI's liability.
+ * There is a monetary cap on Bridgetek's liability.
  * The Software may have subsequently been amended by another user and then
  * distributed by that other user ("Adapted Software").  If so that user may
- * have additional licence terms that apply to those amendments. However, FTDI
+ * have additional licence terms that apply to those amendments. However, Bridgetek
  * has no liability in relation to those amendments.
  * ============================================================================
  */
@@ -68,6 +68,7 @@
 
 #include "EVE.h"
 #include "eve_ui.h"
+#include "eve_keyboard.h"
 
 /** @name Key Scancode Definitions
  * @details Special key definitions for virtual keypad. These map
@@ -175,10 +176,10 @@ struct tagmap_s {
  * @details Use to store current mapping of reports
  */
 //@{
-uint8_t kbd_modifier;
-uint8_t kbd_keycode;
-uint8_t kbd_led_status;
-uint16_t kbd_ctrl_map;
+uint8_t kbd_modifier = 0;
+uint8_t kbd_keycode = 0;
+uint8_t kbd_led_status = 0;
+uint16_t kbd_ctrl_map = 0;
 //@}
 
 /* CONSTANTS ***********************************************************************/
@@ -235,7 +236,7 @@ const struct tagmap_s tagmap[] = {
     {TAG_MINUS, REPORT_ID_KEYBOARD, HID_KEY_MINUS},
     {TAG_EQUALS, REPORT_ID_KEYBOARD, HID_KEY_EQUAL},
     {TAG_SQB_OPEN, REPORT_ID_KEYBOARD, HID_KEY_BRACKET_LEFT},
-    {TAG_BRACKET_CLS, REPORT_ID_KEYBOARD, HID_KEY_BRACKET_RIGHT},
+    {TAG_SQB_CLS, REPORT_ID_KEYBOARD, HID_KEY_BRACKET_RIGHT},
     {TAG_BACKSLASH, REPORT_ID_KEYBOARD, HID_KEY_BACKSLASH},
     {TAG_HASH, REPORT_ID_KEYBOARD, HID_KEY_EUROPE_1},
     {TAG_SEMICOLON, REPORT_ID_KEYBOARD, HID_KEY_SEMICOLON},
@@ -299,7 +300,7 @@ const struct tagmap_s tagmap[] = {
 
     {TAG_SC_POWER, REPORT_ID_CONSUMER_CONTROL, HID_USAGE_CONSUMER_POWER},
     {TAG_SC_SLEEP, REPORT_ID_CONSUMER_CONTROL, HID_USAGE_CONSUMER_SLEEP},
-    {TAG_SC_RESET, REPORT_ID_CONSUMER_CONTROL, HID_USAGE_CONSUMER_RESET},
+    {KEY_SC_WAKEUP, REPORT_ID_CONSUMER_CONTROL, HID_USAGE_CONSUMER_RESET},
 
     {TAG_CC_PLAY, REPORT_ID_CONSUMER_CONTROL, HID_USAGE_CONSUMER_PLAY_PAUSE},
     {TAG_CC_NEXT, REPORT_ID_CONSUMER_CONTROL, HID_USAGE_CONSUMER_SCAN_NEXT},
@@ -309,16 +310,19 @@ const struct tagmap_s tagmap[] = {
     {TAG_CC_VOL_UP, REPORT_ID_CONSUMER_CONTROL, HID_USAGE_CONSUMER_VOLUME_INCREMENT},
     {TAG_CC_VOL_DOWN, REPORT_ID_CONSUMER_CONTROL, HID_USAGE_CONSUMER_VOLUME_DECREMENT},
 
-    {TAG_CUT, REPORT_ID_KEYBOARD, HID_KEY_CUT},
-    {TAG_COPY, REPORT_ID_KEYBOARD, HID_KEY_COPY},
-    {TAG_PASTE, REPORT_ID_KEYBOARD, HID_KEY_PASTE},
-    {TAG_UNDO, REPORT_ID_KEYBOARD, HID_KEY_UNDO},
-    {TAG_REDO, REPORT_ID_KEYBOARD, HID_KEY_AGAIN},
-    {TAG_FIND, REPORT_ID_KEYBOARD, HID_KEY_FIND},
-    {TAG_MENU, REPORT_ID_KEYBOARD, HID_KEY_MENU},
-    {TAG_SELECT, REPORT_ID_KEYBOARD, HID_KEY_SELECT},
-    {TAG_EXECUTE, REPORT_ID_KEYBOARD, HID_KEY_EXECUTE},
+    {TAG_CC_CUT, REPORT_ID_KEYBOARD, HID_KEY_CUT},
+    {TAG_CC_COPY, REPORT_ID_KEYBOARD, HID_KEY_COPY},
+    {TAG_CC_PASTE, REPORT_ID_KEYBOARD, HID_KEY_PASTE},
+    {TAG_CC_UNDO, REPORT_ID_KEYBOARD, HID_KEY_UNDO},
+    {TAG_CC_REDO, REPORT_ID_KEYBOARD, HID_KEY_AGAIN},
+    {TAG_CC_FIND, REPORT_ID_KEYBOARD, HID_KEY_FIND},
+    //{TAG_CC_MENU, REPORT_ID_KEYBOARD, HID_KEY_MENU},
+    //{TAG_CC_SELECT, REPORT_ID_KEYBOARD, HID_KEY_SELECT},
+    //{TAG_CC_EXECUTE, REPORT_ID_KEYBOARD, HID_KEY_EXECUTE},
 };
+
+static struct key_scan key_scan;
+static struct key_report key_report;
 
 /* LOCAL FUNCTIONS / INLINES *******************************************************/
 
@@ -342,7 +346,7 @@ static bool report_busy = 0;
 // Invoked when device is mounted
 void tud_mount_cb(void)
 {
-    eve_ui_keyboard_start();
+    eve_keyboard_start();
 }
 
 // Invoked when device is unmounted
@@ -363,7 +367,7 @@ void tud_suspend_cb(bool remote_wakeup_en)
 // Invoked when usb bus is resumed
 void tud_resume_cb(void)
 {
-    eve_ui_keyboard_start();
+    eve_keyboard_start();
 }
 
 //--------------------------------------------------------------------+
@@ -499,11 +503,18 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
 
 void keyboard_start()
 {
-	eve_ui_keyboard_start();
+	eve_keyboard_start();
 }
 
 void keyboard_update(uint8_t leds)
 {
+    memset(&key_report, 0, sizeof(key_report));
+    if (leds & KEYBOARD_LED_NUMLOCK) key_report.Numeric = 1;
+    if (leds & KEYBOARD_LED_CAPSLOCK) key_report.Caps = 1;
+    if (leds & KEYBOARD_LED_SCROLLLOCK) key_report.Scroll = 1;
+    
+	eve_keyboard_loop(&key_report, &key_scan);
+
 	kbd_led_status = leds;
 }
 
@@ -511,24 +522,21 @@ int keyboard_loop(uint8_t *modifier, uint8_t *keycode, uint16_t *ctrl_map, uint8
 {
 	static uint8_t active_report = -1;
 	static uint8_t active_keycode = 0;
-	struct key_state key_state;
 
 	int i;
 	uint8_t report_send = -1;
-	uint8_t tag_code;
 	uint16_t scancode = 0;
 
-	memset(&key_state, 0, sizeof (struct key_state));
-
-    if (leds & KEYBOARD_LED_NUMLOCK) key_state.Numeric = 1;
-    if (leds & KEYBOARD_LED_CAPSLOCK) key_state.Caps = 1;
-    if (leds & KEYBOARD_LED_SCROLLLOCK) key_state.Scroll = 1;
+    memset(&key_report, 0, sizeof(key_report));
+    if (leds & KEYBOARD_LED_NUMLOCK) key_report.Numeric = 1;
+    if (leds & KEYBOARD_LED_CAPSLOCK) key_report.Caps = 1;
+    if (leds & KEYBOARD_LED_SCROLLLOCK) key_report.Scroll = 1;
     
-	if (eve_ui_keyboard_loop(&key_state, &tag_code) == 0)
+	if (eve_keyboard_loop(&key_report, &key_scan) == 0)
 	{
 		for (i = 0; i < sizeof(tagmap) / sizeof(tagmap[0]); i++)
 		{
-			if (tagmap[i].tag == tag_code)
+			if (tagmap[i].tag == key_scan.KeyTag)
 			{
 				active_report = tagmap[i].report;
 				scancode = tagmap[i].scancode;
@@ -541,14 +549,14 @@ int keyboard_loop(uint8_t *modifier, uint8_t *keycode, uint16_t *ctrl_map, uint8
 			if (active_report == REPORT_ID_KEYBOARD)
 			{
                 *modifier = 0;
-				if (key_state.ShiftL) *modifier |= KEYBOARD_MODIFIER_LEFTSHIFT;
-				if (key_state.ShiftR) *modifier |= KEYBOARD_MODIFIER_RIGHTSHIFT;
-				if (key_state.CtrlL) *modifier |= KEYBOARD_MODIFIER_LEFTCTRL;
-				if (key_state.CtrlR) *modifier |= KEYBOARD_MODIFIER_RIGHTCTRL;
-				if (key_state.Alt) *modifier |= KEYBOARD_MODIFIER_LEFTALT;
-				if (key_state.AltGr) *modifier |= KEYBOARD_MODIFIER_RIGHTALT;
-				if (key_state.WinL) *modifier |= KEYBOARD_MODIFIER_LEFTGUI;
-				if (key_state.WinR) *modifier |= KEYBOARD_MODIFIER_RIGHTGUI;
+				if (key_scan.ShiftL) *modifier |= KEYBOARD_MODIFIER_LEFTSHIFT;
+				if (key_scan.ShiftR) *modifier |= KEYBOARD_MODIFIER_RIGHTSHIFT;
+				if (key_scan.CtrlL) *modifier |= KEYBOARD_MODIFIER_LEFTCTRL;
+				if (key_scan.CtrlR) *modifier |= KEYBOARD_MODIFIER_RIGHTCTRL;
+				if (key_scan.Alt) *modifier |= KEYBOARD_MODIFIER_LEFTALT;
+				if (key_scan.AltGr) *modifier |= KEYBOARD_MODIFIER_RIGHTALT;
+				if (key_scan.WinL) *modifier |= KEYBOARD_MODIFIER_LEFTGUI;
+				if (key_scan.WinR) *modifier |= KEYBOARD_MODIFIER_RIGHTGUI;
 
 				*keycode = scancode & 0xff;
 			}
@@ -571,17 +579,18 @@ int keyboard_loop(uint8_t *modifier, uint8_t *keycode, uint16_t *ctrl_map, uint8
 			if (active_report == REPORT_ID_KEYBOARD)
 			{
 				*keycode = 0;
+                *modifier = 0;
 
 				// Pressing an alphanumeric or symbol key will clear
 				// the state of the special function keys.
-				key_state.ShiftL = 0;
-				key_state.ShiftR = 0;
-				key_state.CtrlL = 0;
-				key_state.CtrlR = 0;
-				key_state.Alt = 0;
-				key_state.AltGr = 0;
-				key_state.WinL = 0;
-				key_state.WinR = 0;
+				key_scan.ShiftL = 0;
+				key_scan.ShiftR = 0;
+				key_scan.CtrlL = 0;
+				key_scan.CtrlR = 0;
+				key_scan.Alt = 0;
+				key_scan.AltGr = 0;
+				key_scan.WinL = 0;
+				key_scan.WinR = 0;
 			}
 			else if (active_report == REPORT_ID_CONSUMER_CONTROL)
 			{

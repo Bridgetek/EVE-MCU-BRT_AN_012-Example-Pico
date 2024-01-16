@@ -1,6 +1,12 @@
 /* Auto-generated file by fonts.mk */
 #include <stdint.h>
-const uint8_t font_arial_ttf_15_L4[]  __attribute__((aligned(4))) = 
+#include <stddef.h>
+#if defined(__FT900__) && !defined(__CDT_PARSER__)
+#define EVE_UI_FLASH __flash__
+#else
+#define EVE_UI_FLASH
+#endif // __FT900__
+const uint8_t EVE_UI_FLASH font_arial_ttf_15_L4[]  __attribute__((aligned(4))) = 
 /*Command Line: fnt_cvt.exe -i arial.ttf -s 15 -d 0 -u utf8_extra.txt*/
 
 /*47 characters has been converted */
@@ -227,4 +233,5 @@ const uint8_t font_arial_ttf_15_L4[]  __attribute__((aligned(4))) =
 /*Bitmap Raw Data end ---*/
 }
 ;
+
 const uint32_t font_arial_ttf_15_L4_size = sizeof(font_arial_ttf_15_L4);

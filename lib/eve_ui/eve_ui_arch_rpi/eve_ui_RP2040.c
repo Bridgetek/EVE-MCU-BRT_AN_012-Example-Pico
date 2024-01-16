@@ -1,5 +1,5 @@
 /**
-  @file eve_ui_ft9xx.c
+  @file eve_ui_RP2040.c
  */
 /*
  * ============================================================================
@@ -43,7 +43,24 @@
 
 /* INCLUDES ************************************************************************/
 
+// Guard against being used for incorrect CPU type.
+#if defined(PLATFORM_RP2040)
+
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include "pico/time.h"
+
+#include "EVE_config.h"
+#include "EVE.h"
+#include "HAL.h"
+
 #include "eve_ui.h"
+
+/* Flash read/write capability for storing Non-volatile data */
+#include <hardware/flash.h>
+#include <hardware/sync.h>
 
 /* CONSTANTS ***********************************************************************/
 
@@ -54,7 +71,7 @@
 
 /**
  @brief Key for identifying if touchscreen calibration values are programmed into
- datalogger memory in the Flash.
+  the Flash.
  */
 #define VALID_KEY_TOUCHSCREEN 0xd72f91a3
 
@@ -67,7 +84,7 @@
 /* LOCAL FUNCTIONS / INLINES *******************************************************/
 
 /**
- * @brief Functions used to store calibration data in flash.
+ * @brief Functions used to store calibration data in file.
  */
 //@{
 int8_t eve_ui_arch_flash_calib_init(void)
@@ -108,67 +125,15 @@ int8_t eve_ui_arch_flash_calib_read(struct touchscreen_calibration *calib)
 }
 //@}
 
-void eve_ui_arch_write_cmd_from_flash(const uint8_t *ImgData, uint32_t length)
-{
-	uint32_t offset = 0;
-	uint8_t ramData[512];
-	uint8_t *flash_addr = XIP_BASE + (uint8_t *)ImgData;
-	uint32_t left;
-
-	while (offset < length)
-	{
-		memcpy(ramData, flash_addr, 512);
-
-		if (length - offset < 512)
-		{
-			left = length - offset;
-		}
-		else
-		{
-			left = 512;
-		}
-		EVE_LIB_WriteDataToCMD(ramData, left);
-		offset += left;
-		flash_addr += left;
-	};
-}
-
-void eve_ui_arch_write_ram_from_flash(const uint8_t *ImgData, uint32_t length, uint32_t dest)
-{
-	uint32_t offset = 0;
-	uint8_t ramData[512];
-	uint8_t *flash_addr = XIP_BASE + (uint8_t *)ImgData;
-	uint32_t left;
-
-	while (offset < length)
-	{
-		memcpy(ramData, flash_addr, 512);
-
-		if (length - offset < 512)
-		{
-			left = length - offset;
-		}
-		else
-		{
-			left = 512;
-		}
-		EVE_LIB_WriteDataToRAMG(ramData, left, dest);
-		offset += left;
-		flash_addr += left;
-		dest += left;
-	};
-}
-
 void eve_ui_arch_write_cmd_from_pm(const uint8_t *ImgData, uint32_t length)
 {
 	uint32_t offset = 0;
 	uint8_t ramData[512];
-	uint8_t *pm_addr = (uint8_t *)(ImgData);
 	uint32_t left;
 
 	while (offset < length)
 	{
-		memcpy(ramData, pm_addr, 512);
+		memcpy(ramData, (const void *)ImgData, 512);
 
 		if (length - offset < 512)
 		{
@@ -180,7 +145,7 @@ void eve_ui_arch_write_cmd_from_pm(const uint8_t *ImgData, uint32_t length)
 		}
 		EVE_LIB_WriteDataToCMD(ramData, left);
 		offset += left;
-		pm_addr += left;
+		ImgData += left;
 	};
 }
 
@@ -188,12 +153,11 @@ void eve_ui_arch_write_ram_from_pm(const uint8_t *ImgData, uint32_t length, uint
 {
 	uint32_t offset = 0;
 	uint8_t ramData[512];
-	uint8_t *pm_addr = (uint8_t *)(ImgData);
 	uint32_t left;
 
 	while (offset < length)
 	{
-		memcpy(ramData, pm_addr, 512);
+		memcpy(ramData, (const void *)ImgData, 512);
 
 		if (length - offset < 512)
 		{
@@ -205,14 +169,21 @@ void eve_ui_arch_write_ram_from_pm(const uint8_t *ImgData, uint32_t length, uint
 		}
 		EVE_LIB_WriteDataToRAMG(ramData, left, dest);
 		offset += left;
-		pm_addr += left;
+		ImgData += left;
 		dest += left;
 	};
 }
 
-void eve_ui_arch_sleepms(uint32_t ms)
+void eve_ui_memcpy_pm(void *dst, const void* src, size_t s)
 {
-	sleep_ms(ms);
+	memcpy(dst, src, s);
+}
+
+void eve_ui_arch_sleepms(uint32_t delay)
+{
+	sleep_ms(delay);
 }
 
 /* FUNCTIONS ***********************************************************************/
+
+#endif /* defined(PLATFORM_RP2040) */

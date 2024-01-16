@@ -1,5 +1,6 @@
-### Auto-generated file by images.mk ###
 .align 4
 .global img_refresh_jpg
 img_refresh_jpg:
-.incbin "refresh.jpg"
+.incbin "../Images/refresh.jpg"
+.global img_end_refresh_jpg
+img_end_refresh_jpg:
