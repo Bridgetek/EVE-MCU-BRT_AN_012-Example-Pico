@@ -93,7 +93,7 @@ The macro `PLATFORM_PICO` *MUST* be defined for the proper compilation of this c
 
 In the `eve_ui` folder are several files an routines that simplify the use of EVE:
 - The `eve_ui_main.c` file performs general IDM2040-7A operations such as initialisation, calibration and detecting touchscreen events (tags). 
-It will also generate some simple display lists for �Waiting for Host� and an optional screenshot feature.
+It will also generate some simple display lists for "Waiting for Host" and an optional screenshot feature.
 - `eve_ui_images.c` contains code for loading JPG images from Program Memory of the RP2040 to the data memory of the IDM2040-7A.
 - `eve_ui_ext_font.c` which has code to load a custom font extension used by this application to display characters not supported by the built-in fonts on the IDM2040-7A.
 
@@ -104,7 +104,7 @@ It will make display lists for each type of keyboard and populate tag informatio
 
 ## `Images` Folder
 
-The IDM2040-7A can display JPEG images. This folder contains the raw JPEG images which are used in the �eve_ui� library. They are copied to the IDM2040-7A by function calls in �eve_ui_images.c�.
+The IDM2040-7A can display JPEG images. This folder contains the raw JPEG images which are used in the "eve_ui" library. They are copied to the IDM2040-7A by function calls in "eve_ui_images.c".
 
 The files in this folder are loaded into the final application image by creating an assembler file which contains the binary JPG image. 
 
@@ -194,7 +194,7 @@ The application note implements a USB HID class device which can be accessed by 
 The USB device code is implemented in `main.c` and USB HID class specific code is in `keyboard.c`. 
 All virtual keyboard drawing is carried out in the `eve_ui` library which invokes the eve library for low-level control of the IDM2040-7A device.
 
-Keypress events detected on the virtual keyboard will generate �tags� which uniquely represent one keyboard action. 
+Keypress events detected on the virtual keyboard will generate "tags" which uniquely represent one keyboard action. 
 These tags indicate that a key has been pressed, such as a letter or number key. 
 Each tag received will be converted into a HID report and sent to the host via USB.
 
@@ -203,14 +203,14 @@ Each tag received will be converted into a HID report and sent to the host via U
 The USB device implements a composite device consisting of 2 HID interfaces. 
 The endpoints on these interfaces will produce one of 3 different report descriptor types when a key is pressed. 
 
-The first interface is a �Boot Report� type interface with a single endpoint producing a single report to the host; 
+The first interface is a "Boot Report" type interface with a single endpoint producing a single report to the host; 
 the second interface can either produce Application Reports (Power Down, Suspend etc.) or Consumer Control Reports (Media Controls etc.).
 
 ![USB Interface Diagram](docs/Figure5.png "USB Interface Diagram")
 
 **Figure 5 USB Interface Diagram**
 
-The application will decode the type of the key pressed on the virtual keypad to one of the 3 report types by identifying the key�s tag in a lookup table. 
+The application will decode the type of the key pressed on the virtual keypad to one of the 3 report types by identifying the key"s tag in a lookup table. 
 The lookup table can be modified or extended to suit the application.
 
 ## USB Code Overview
@@ -282,7 +282,7 @@ Modification of the report generation code will be required for other types of U
 
 #### Boot Reports
 
-Boot reports contain several flags for �modifier� keys (shift, control, alt and GUI) and one-byte scancodes which identify any �normal� key pressed. 
+Boot reports contain several flags for "modifier" keys (shift, control, alt and GUI) and one-byte scancodes which identify any "normal" key pressed. 
 If no normal key is pressed then the scancode will be zero. When any key is released then a report is sent with either or both the flag and scancode cleared. 
 
 #### Consumer Control Reports
@@ -302,7 +302,7 @@ The report ID for system controls is 1.
 The IDM2040-7A device relies on a method called a display list to determine what is shown on the screen. 
 This means that a new display list is generated only when a display change is required. 
 
-Each virtual �key� on the keyboard is assigned a unique tag. 
+Each virtual "key" on the keyboard is assigned a unique tag. 
 The function `eve_ui_keyboard_loop` in `eve_ui_keyboard.c` source code file detects a touchscreen press and returns the tag of the button.
 Some buttons are reserved within the `eve_ui` library to enable switching between keyboard, keypad, media and special screens. 
 
@@ -316,7 +316,7 @@ The screen header is specifically drawn in `eve_ui_main.c` to allow for the libr
 
 ### Special Screens
 
-A special screen is demonstrated which has a key layout specific to an application. This screen is selected using the orange �Z� on the header bar.
+A special screen is demonstrated which has a key layout specific to an application. This screen is selected using the orange "Z" on the header bar.
  
 # Using the Virtual Keyboard
 
@@ -332,7 +332,7 @@ The host PC connects via USB to the IDM2040-7A module.
 
 ## Use of Application Note Software
 
-The virtual keyboard will wait until it is connected to a host. The IDM2040-7A display will indicate this with the Bridgetek logo and the caption �Waiting for host��.
+The virtual keyboard will wait until it is connected to a host. The IDM2040-7A display will indicate this with the Bridgetek logo and the caption "Waiting for host".
 
 Once the host is connected then it will display the virtual keyboard.
 
@@ -340,18 +340,18 @@ Once the host is connected then it will display the virtual keyboard.
 
 **Figure 8 Virtual Keyboard Screen**
 
-The settings screen, is accessed from the �Settings� button allowing the choice of UK, US and German keyboard layouts. 
-Pressing �Settings� in the upper left hand corner will display an alphanumeric keyboard section of the virtual keyboard.
+The settings screen, is accessed from the "Settings" button allowing the choice of UK, US and German keyboard layouts. 
+Pressing "Settings" in the upper left hand corner will display an alphanumeric keyboard section of the virtual keyboard.
 
-Pressing the �KeyPad� button will show the control and keypad area of a standard keyboard. 
-To return to the main keyboard press the �Keyboard� button again.
+Pressing the "KeyPad" button will show the control and keypad area of a standard keyboard. 
+To return to the main keyboard press the "Keyboard" button again.
 
  
  ![Virtual KeyPad Screen](docs/Figure9.jpg "Virtual KeyPad Screen")
 
 **Figure 9 Virtual KeyPad Screen**
 
-Pressing the �Z� button will show the special application screen. The keyboard or keypad can then be accessed with appropriate buttons.
+Pressing the "Z" button will show the special application screen. The keyboard or keypad can then be accessed with appropriate buttons.
 
 There is no functionality in the special application screen.
 
@@ -362,7 +362,7 @@ The US and UK layouts are QWERTY layouts where the key positions change slightly
 the German layout is QWERTZ, however the layout is the same as the UK layout. 
 For the German keyboard to work the host needs to have its keyboard locale set to German to allow the scan codes to match the key labels.
 
-# Appendix C � Revision History
+# Appendix C " Revision History
 
 Document Title: BRT_AN_012 FT9xx USBD HID Touch Panel
 
@@ -371,7 +371,7 @@ Product Page: http://brtchip.com/m-ft9/
 | Revision | Changes | Date |
 | ------------- |:-------------:| -----:|
 | 1.0 | Initial Release | 03/07/2017 | 
-| 1.1 | Fixed the Product Page broken link under Section Appendix C � Revision History. | 31/10/2017 | 
+| 1.1 | Fixed the Product Page broken link under Section Appendix C " Revision History. | 31/10/2017 | 
 | 1.2 | Improvements to code and to the scope and coverage of the document. | 20/08/2| 1.3 | This release will support FT9xx Toolchain version V2.5.0 and later. Older toolchain versions are not supported due to an API change in the usbd.c library file. | 05/03/2019 |
 | 1.4 | Rewrite to use released version of [BRT_AN_025](https://github.com/Bridgetek/EVE-MCU-BRT_AN_025) | 11/01/2023 |
  |
