@@ -332,7 +332,7 @@ The host PC connects via USB to the IDM2040-7A module.
 
 ## Use of Application Note Software
 
-The virtual keyboard will wait until it is connected to a host. The IDM2040-7A display will indicate this with the Bridgetek logo and the caption "Waiting for host".
+The virtual keyboard will wait until it is connected to a host. The IDM2040-7A display will indicate this with the Bridgetek logo and the caption "Waiting for host...".
 
 Once the host is connected then it will display the virtual keyboard.
 
@@ -364,9 +364,9 @@ For the German keyboard to work the host needs to have its keyboard locale set t
 
 # Appendix C " Revision History
 
-Document Title: BRT_AN_012 FT9xx USBD HID Touch Panel
+Document Title: BRT_AN_012 IDM2040-7A USBD HID Touch Panel
 
-Product Page: http://brtchip.com/m-ft9/
+Product Page: https://brtchip.com/product/idm2040-7a/
 
 | Revision | Changes | Date |
 | ------------- |:-------------:| -----:|
@@ -374,6 +374,6 @@ Product Page: http://brtchip.com/m-ft9/
 | 1.1 | Fixed the Product Page broken link under Section Appendix C " Revision History. | 31/10/2017 | 
 | 1.2 | Improvements to code and to the scope and coverage of the document. | 20/08/2| 1.3 | This release will support FT9xx Toolchain version V2.5.0 and later. Older toolchain versions are not supported due to an API change in the usbd.c library file. | 05/03/2019 |
 | 1.4 | Rewrite to use released version of [BRT_AN_025](https://github.com/Bridgetek/EVE-MCU-BRT_AN_025) | 11/01/2023 |
- |
+| 1.5 | Adapted for IDM2040-7A (pico) example. | 16/01/2023 |
 
 
