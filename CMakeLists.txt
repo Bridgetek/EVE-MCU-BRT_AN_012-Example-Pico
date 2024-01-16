@@ -57,8 +57,8 @@ file(GLOB IMAGE_FILES CONFIGURE_DEPENDS
 
 file(GLOB SRC_FILES CONFIGURE_DEPENDS
 	Sources/main.c
-	Sources/usb_descriptors.c
 	Sources/eve_keyboard.c
+	Sources/usb_descriptors.c
 	lib/eve_ui/eve_ui_arch_rpi/*.c
 	lib/eve_ui/source/*.c
 	lib/eve_ui_keyboard/*.c

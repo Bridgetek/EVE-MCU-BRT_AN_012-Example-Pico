@@ -64,113 +64,11 @@
 #include "bsp/board.h"
 #include "tusb.h"
 
-#include "usb_descriptors.h"
-
 #include "EVE.h"
 #include "eve_ui.h"
 #include "eve_keyboard.h"
+#include "keyboard.h"
 
-/** @name Key Scancode Definitions
- * @details Special key definitions for virtual keypad. These map
- * from keys drawn on the keyboard to scan codes defined in
- * the keyboard abstraction file.
- * Sourced from Microsoft Keyboard Scancode Specification and USB.org
- * USB HID Usage Tables.
- */
-//@{
-enum {
-	KEY_A = 4, KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_G, KEY_H, KEY_I,
-	KEY_J, KEY_K, KEY_L, KEY_M, KEY_N, KEY_O, KEY_P, KEY_Q, KEY_R,
-	KEY_S, KEY_T, KEY_U, KEY_V, KEY_W, KEY_X, KEY_Y, KEY_Z,
-
-	KEY_1 = 30, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9,	KEY_0,
-
-	KEY_ENTER = 40,				// Keyboard Enter
-	KEY_ESCAPE = 41,			// Escape key
-	KEY_BACKSPACE = 42,			// Backspace key
-	KEY_TAB = 43,				// Tab key
-	KEY_SPACE = 44,				// Keyboard Spacebar
-	KEY_MINUS, KEY_EQUALS, KEY_SQB_OPEN, KEY_SQB_CLS,
-	KEY_BACKSLASH, KEY_HASH, KEY_SEMICOLON, KEY_SQUOTE,
-	KEY_TILDE, KEY_COMMA, KEY_DOT, KEY_SLASH,
-	KEY_CAPS_LOCK = 57,				// Caps Lock
-
-	KEY_F1 = 58, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6, KEY_F7, KEY_F8,
-	KEY_F9, KEY_F10, KEY_F11, KEY_F12,
-
-	KEY_PRINT_SCREEN = 70,
-	KEY_SCROLL_LOCK = 71,				// Scroll Lock
-	KEY_PAUSE = 72,	KEY_INSERT,	KEY_HOME, KEY_PAGE_UP, KEY_DEL,	KEY_END,
-	KEY_PAGE_DOWN, KEY_RIGHT_ARROW, KEY_LEFT_ARROW, KEY_DOWN_ARROW,
-	KEY_UP_ARROW = 82,
-	KEY_NUMBER_LOCK = 83,				// Number Lock
-
-	KEY_PAD_DIV = 84, KEY_PAD_MUL, KEY_PAD_MINUS, KEY_PAD_PLUS, KEY_PAD_ENTER,
-	KEY_PAD_1 = 89, KEY_PAD_2, KEY_PAD_3, KEY_PAD_4, KEY_PAD_5, KEY_PAD_6,
-	KEY_PAD_7, KEY_PAD_8, KEY_PAD_9, KEY_PAD_0, KEY_PAD_DOT,
-
-	KEY_APP = 101,				// Context menu key
-};
-
-enum {
-	KEY_CTRLL = 224,				// Ctrl
-	KEY_SHIFTL = 225,				// Shift
-	KEY_ALT = 226,				// Alt
-	KEY_WINL = 227,				// Win
-	KEY_CTRLR = 228,				// Ctrl
-	KEY_SHIFTR = 229,				// Shift
-	KEY_ALTGR = 230,				// AltGr
-	KEY_WINR = 231,				// Win
-};
-//@}
-
-/** @name System Control Scancode Definitions
- * @details Sourced from USB.org USB HID Usage Tables.
- */
-//@{
-enum {
-	KEY_SC_POWER = 81,
-	KEY_SC_SLEEP = 82,
-	KEY_SC_WAKEUP = 83,
-};
-//@}
-
-/** @name Consumer Control Scancode Definitions
- * @details Sourced from USB.org USB HID Usage Tables.
- */
-//@{
-enum {
-	KEY_CC_PLAY = 0xb0,
-	KEY_CC_PAUSE = 0xb1,
-	KEY_CC_RECORD = 0xb2,
-	KEY_CC_FFWD = 0xb3,
-	KEY_CC_RWD = 0xb4,
-	KEY_CC_NEXT = 0xb5,
-	KEY_CC_PREV = 0xb6,
-	KEY_CC_STOP = 0xb7,
-
-	KEY_CC_MUTE = 0xe2,
-	KEY_CC_VOL_UP = 0xe9,
-	KEY_CC_VOL_DOWN = 0xea,
-
-	KEY_CC_CUT = 0x21c,
-	KEY_CC_COPY = 0x21b,
-	KEY_CC_PASTE = 0x21d,
-	KEY_CC_UNDO = 0x21a,
-	KEY_CC_REDO = 0x279,
-	KEY_CC_FIND = 0x221,
-};
-//@}
-
-
-/** @name Tag map structure
- * @details Used internally in keyboard.c to map tags to scancodes.
- */
-struct tagmap_s {
-	uint8_t tag;
-	uint8_t report;
-	uint16_t scancode;
-};
 
 /** @name Current key map
  * @details Use to store current mapping of reports
