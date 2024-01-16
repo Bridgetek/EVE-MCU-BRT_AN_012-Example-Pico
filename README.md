@@ -1,18 +1,18 @@
 ![Bridgetek Logo](docs/Bridgetek-logo.png "Bridgetek")
 
-# BRT_AN_012 FT9xx USBD HID Touch Panel
+# BRT_AN_012 IDM2040-7A USBD HID Touch Panel
 
-Application Note BRT_AN_012 FT9xx USBD HID Touch Panel.  
+Application Note BRT_AN_012 IDM2040-7A USBD HID Touch Panel.  
 See https://brtchip.com/software-examples/ft9xx-examples/
 
 Demonstrates a USB HID implementing a Virtual Keyboard display on an Bridgetek EVE screen. 
 It uses the [BRT_AN_025](https://github.com/Bridgetek/EVE-MCU-BRT_AN_025) library. 
 
-This project requires a BridgeTek MM900EVxB board and FT812 or BT817 board and display.
+This project requires a BridgeTek IDM2040-7A board and display.
 
 ## Information
 
-This Application Note describes a virtual keyboard implemented with an FT9XX device and an FT81X/BT8XX touch screen. 
+This Application Note describes a virtual keyboard implemented with an IDM2040-7A touch screen. 
 The FT81X and BT81X and later devices are supported. It is assumed that the display is 800 by 480 pixels.
 
 # Introduction
@@ -25,19 +25,19 @@ The keyboard can be set to show different keyboard layouts for different regiona
 
 **Figure 1 Block Diagram**
 
-The FT9XX presents a HID keyboard interface to the USB Host computer. The FT9XX provides a
-bridge via QSPI connection to the FT81X/BT8XX device. The FT81X/BT8XX device controls the TFT display and the
+The IDM2040-7A presents a HID keyboard interface to the USB Host computer. The RP2040 provides a
+bridge via SPI connection to the BT817 device. The IDM2040-7A device controls the TFT display and the
 touchscreen interface on the display.
 
 ## Overview
 
-This document describes the design and implementation of the FT9XX USBD HID Touch Panel code. The FT9XX USBD HID Touch Panel allows a user to:
+This document describes the design and implementation of the IDM2040-7A USBD HID Touch Panel code. The IDM2040-7A USBD HID Touch Panel allows a user to:
 - Implement a virtual keyboard on a touchscreen device.
 - Connect the device to a host via USB.
 - Interact with the host as if a hardware keyboard was connected.
 - Modify the virtual keyboard for different international or regional layouts.
 
-This document is intended to demonstrate the capabilities of the FT9XX family of microcontrollers by emulating USB devices and interfacing to FT81X/BT8XX display ICs.
+This document is intended to demonstrate the capabilities of the IDM2040-7A display by emulating USB devices.
 
 ## Scope
 
@@ -47,11 +47,11 @@ There is no specific support for Apple Mac keyboards although most Apple Mac fun
 
 ### Features
 
-The application note shows how to implement a USB HID device and interface with an FT81X/BT8XX family display IC. 
+The application note shows how to implement a USB HID device and interface with an IDM2040-7A display IC. 
 
 The USB device interface is used to send keyboard scan codes to the host and receive reports to change the status of the Caps Lock, Scroll Lock and Num Lock LEDs on the keyboard.
 
-The FT81X/BT8XX interface shows communication with the display IC co-processor, reading touch events and processing these to generate the keyboard scan codes. The display has several screens that can be selected with buttons to allow different layout or part of a keyboard to be displayed.
+The IDM2040-7A interface shows communication with the display IC co-processor, reading touch events and processing these to generate the keyboard scan codes. The display has several screens that can be selected with buttons to allow different layout or part of a keyboard to be displayed.
 
 ### Enhancement
 
@@ -66,71 +66,50 @@ This USB Device example application should be treated as an example. Full source
 
 # Project Overview
 
-The server main program is responsible for detecting a connection from the FT900 to the host PC and instantiating the FT9XX as a USB HID class when enumerated by the host. 
-It will also call the EVE library to initialise the FT81X/BT8XX.
+The server main program is responsible for detecting a connection from the RP2040 to the host PC and instantiating the IDM2040-7A as a USB HID class when enumerated by the host. 
+It will also call the EVE library to initialise the IDM2040-7A.
 
 Source code is divided in folders for functional components. 
 
 ## `Sources` Folder
 
 The main part of the application is found in the `Sources` folder. This consists of the following files: 
-- The `main.c` file is generally responsible for the FT9xx setup and USB device code.
-- The file `keyboard.c` implements an interface between the USB device and the FT81X/BT8XX display.
+- The `main.c` file is generally responsible for the RP2040 setup and USB device code.
+- The file `keyboard.c` implements an interface between the USB device and the IDM2040-7A display.
 - Another file `eve_keyboard.c` controls the EVE keyboard component in the library.
-
-The other file in this folder is:
--  “crt0.S” a modified start-up file (in FT9xx assembly language) to allow the application to write to a protected section of FlashROM on the device.
 
 Files in these folders use the `Includes` folder for application specific header files.
 
 ## `lib/eve` Folder
 
-This folder holds the API code which abstracts the FT81X/BT8XX register and processing list writes into C functions. 
+This folder holds the API code which abstracts the IDM2040-7A register and processing list writes into C functions. 
 It is code copied from the BRT_AN_025 Application Note: https://github.com/Bridgetek/EVE-MCU-BRT_AN_025
 
-Only the `ports/eve_arch_ft9xx`, `source` and `include` directories need to be copied. 
+Only the `ports/eve_arch_rpi`, `source` and `include` directories need to be copied. 
 
-The macro `PLATFORM_FT9XX` *MUST* be defined for the proper compilation of this code. 
+The macro `PLATFORM_PICO` *MUST* be defined for the proper compilation of this code. 
 
 ##	`eve_ui` Folder
 
 In the `eve_ui` folder are several files an routines that simplify the use of EVE:
-- The `eve_ui_main.c` file performs general FT81X/BT8XX operations such as initialisation, calibration and detecting touchscreen events (tags). 
-It will also generate some simple display lists for “Waiting for Host” and an optional screenshot feature.
-- `eve_ui_images.c` contains code for loading JPG images from Program Memory of the FT9XX to the data memory of the FT81X/BT8XX.
-- `eve_ui_ext_font.c` which has code to load a custom font extension used by this application to display characters not supported by the built-in fonts on the FT81X/BT8XX.
+- The `eve_ui_main.c` file performs general IDM2040-7A operations such as initialisation, calibration and detecting touchscreen events (tags). 
+It will also generate some simple display lists for ï¿½Waiting for Hostï¿½ and an optional screenshot feature.
+- `eve_ui_images.c` contains code for loading JPG images from Program Memory of the RP2040 to the data memory of the IDM2040-7A.
+- `eve_ui_ext_font.c` which has code to load a custom font extension used by this application to display characters not supported by the built-in fonts on the IDM2040-7A.
 
 ##	`eve_ui_keyboard` Folder
 
-The `eve_ui_keyboard.c` file draws a keyboard on the EVE screen by sending display lists to the FT81X/BT8XX via the EVE library. 
+The `eve_ui_keyboard.c` file draws a keyboard on the EVE screen by sending display lists to the IDM2040-7A via the EVE library. 
 It will make display lists for each type of keyboard and populate tag information for the touchscreen controller.
 
 ## `Images` Folder
 
-The FT81X/BT8XX can display JPEG images. This folder contains the raw JPEG images which are used in the “eve_ui” library. They are copied to the FT81X/BT8XX by function calls in “eve_ui_images.c”.
+The IDM2040-7A can display JPEG images. This folder contains the raw JPEG images which are used in the ï¿½eve_uiï¿½ library. They are copied to the IDM2040-7A by function calls in ï¿½eve_ui_images.cï¿½.
 
 The files in this folder are loaded into the final application image by creating an assembler file which contains the binary JPG image. 
 
 The process for doing this is handled by a makefile (images.mk) which generates assembler S files for each image in the folder. 
 The makefile is run before the main code is compiled and refreshes the source files for the project to include the assembler files. 
-
-### Converting Images in Eclipse
-
-In Eclipse Project Properties, a new “Builder” is added before the “CDT Builder”. The builder is shown in Figure 2.
-
-![Builders Project Settings](docs/Figure2.png "Builders Project Settings") 
-
-**Figure 2 Builders Project Settings**
-
-When the “Images Builder” is run it invokes the makefile which generates the assembler files. 
-The builder settings are shown in Figure 3. 
-
-![Images Builder Settings](docs/Figure3.png "Images Builder Settings") 
-
-**Figure 3 Images Builder Settings**
-
-In the Refresh tab of the settings the “Refresh resources upon completion” and “The folder containing the selected resource” checkboxes ensure that the CDT Builder will pick up any changes to the S files generated. 
-In the “Build Options” tab the builder should be run “After a clean” and “During manual builds”.
 
 ### Converting Images in Command Line
 
@@ -159,7 +138,7 @@ Images which have been converted with this method will only appear in the final 
 
 ## `FontConvertor` Folder
 
-The FT8XX FNT_CVT utility (EVE Font Converter) is used to change a system TTF into a bitmap image which can be used by the FT81X/BT8XX. 
+The FT8XX FNT_CVT utility (EVE Font Converter) is used to change a system TTF into a bitmap image which can be used by the IDM2040-7A. 
 The application uses the standard Arial font to make 2 font files: 
 ASCII characters from 32 to 127 and several UETF-8 characters for key labels not available through normal ASCII.
 
@@ -169,14 +148,6 @@ The extended characters are used to provide arrow images for key labels and non-
 
 The font files in this folder are the .rawh files produced by the FontConvertor. 
 They are loaded into the final application image by creating a C file which contains the binary font data in the form of an array. 
-
-### Converting Images in Eclipse
-
-The process for doing this is handled by a makefile (fonts.mk) which generates C files for each font file in the folder. 
-The makefile is run before the main code is compiled and refreshes the source files for the project. 
-In Eclipse Project Properties, a new “Builder” is added before the “CDT Builder”. 
-The builder is called “Fonts Builder” and is shown in Figure 2. 
-Builder settings are the same as for the Images Builder.
 
 ### Converting Fonts in Command Line
 
@@ -190,35 +161,13 @@ The output C source files are placed in the `C` directory.
 
 # Compilation
 
-Provision is made to compile from Eclipse IDE, make and CMake. The BRT_AN_012 source code from the `Bridgetek/BRT_AN_012_FT9xx_USBD_HID_Touch_Panel` repository can be cloned or downloaded from GitHub.
-
-## Importing into the FT9xx Toolchain (Eclipse IDE)
-
-The project code can be imported into the FT9xx Toolchain. 
-
-Select `File` --> `Import` --> `General` --> `Existing Projects into Eclipse`, and point to the location of the downloaded project directory.
-
-![Eclipse Project](docs/Figure4.png "Eclipse Project")
-
-**Figure 4 Eclipse Project**
-
-The project will appear in Eclipse Project Explorer as shown in Figure 4. 
-On Eclipse IDE with the BridgeTek FT9xx Plugin, the project can be imported into a workspace and can be compiled and debugged without changes.
-
-### make
-
-From a command line prompt the `make` utility will compile the `bin` file for programming the device. 
-
-Optional parameters for the build are: 
-- Select debug or release builds with `BUILD=Release` or `BUILD=Debug`.
-- Choose an output directory with `OUTDIR=build`. The defaults are `FT90x_Debug` or `FT90x_Release`.
-- Change the name of the generated output files with `PROJECT=name`.
+Provision is made to compile from CMake. The BRT_AN_012 source code from the `Bridgetek/EVE-MCU-BRT_AN_012-Example-Pico` repository can be cloned or downloaded from GitHub.
 
 ## CMake
 
 From a command line prompt the `cmake` utility will generate and compile the `bin` file for programming the device. 
 
-The generator "MinGW Makefiles" is used for the FT9xx Toolchain. Also, it is useful to generate build files in an intermediate directory.
+The generator "MinGW Makefiles" is used for the pico Toolchain. Also, it is useful to generate build files in an intermediate directory.
 A good command line to choose to generate build files for CMake is:
 
 `cmake -G "MinGW Makefiles" -B build -S .` 
@@ -229,14 +178,13 @@ Then the binary can be compiled with:
 
 Optional parameters for the build are: 
 - Select debug or release builds with `-DBUILD=Release` or `-DBUILD=Debug`.
-- Choose an output directory with `-DOUTDIR=build`. The defaults are `FT90x_Debug` or `FT90x_Release`.
 - Change the name of the generated output files with `-DPROJECT=name`.
 
 # Changing the Application Software
 
 The application software provided can be altered and changed if required.
 
-With each software change, the project should be rebuilt and reprogrammed into the FT90x IC. Please refer to AN_325 FT9xx Toolchain Installation Guide for further information.
+With each software change, the project should be rebuilt and reprogrammed into the IDM2040-7A. 
 
 Windows will not reload a driver for a device with the same VID/PID and serial number but a different USB Class. If there are driver problems then remove the "USB Composite Device" detected for the application in Windows Device Manager then unplug and replug the device.
 
@@ -244,9 +192,9 @@ Windows will not reload a driver for a device with the same VID/PID and serial n
 
 The application note implements a USB HID class device which can be accessed by a USB host with appropriate driver software. 
 The USB device code is implemented in `main.c` and USB HID class specific code is in `keyboard.c`. 
-All virtual keyboard drawing is carried out in the `eve_ui` library which invokes the eve library for low-level control of the FT81X/BT8XX device.
+All virtual keyboard drawing is carried out in the `eve_ui` library which invokes the eve library for low-level control of the IDM2040-7A device.
 
-Keypress events detected on the virtual keyboard will generate “tags” which uniquely represent one keyboard action. 
+Keypress events detected on the virtual keyboard will generate ï¿½tagsï¿½ which uniquely represent one keyboard action. 
 These tags indicate that a key has been pressed, such as a letter or number key. 
 Each tag received will be converted into a HID report and sent to the host via USB.
 
@@ -255,20 +203,15 @@ Each tag received will be converted into a HID report and sent to the host via U
 The USB device implements a composite device consisting of 2 HID interfaces. 
 The endpoints on these interfaces will produce one of 3 different report descriptor types when a key is pressed. 
 
-The first interface is a “Boot Report” type interface with a single endpoint producing a single report to the host; 
+The first interface is a ï¿½Boot Reportï¿½ type interface with a single endpoint producing a single report to the host; 
 the second interface can either produce Application Reports (Power Down, Suspend etc.) or Consumer Control Reports (Media Controls etc.).
 
 ![USB Interface Diagram](docs/Figure5.png "USB Interface Diagram")
 
 **Figure 5 USB Interface Diagram**
 
-The application will decode the type of the key pressed on the virtual keypad to one of the 3 report types by identifying the key’s tag in a lookup table. 
+The application will decode the type of the key pressed on the virtual keypad to one of the 3 report types by identifying the keyï¿½s tag in a lookup table. 
 The lookup table can be modified or extended to suit the application.
-
-### DFU Implementation
-
-The application note code also includes code for a USB DFU device (Device Firmware Upgrade) and Microsoft WCID descriptors to load the WinUSB drivers on the host system to facilitate firmware upgrades. 
-This code is ignored in this text and excluded by the pre-processor in the source code.
 
 ## USB Code Overview
 
@@ -339,7 +282,7 @@ Modification of the report generation code will be required for other types of U
 
 #### Boot Reports
 
-Boot reports contain several flags for ‘modifier’ keys (shift, control, alt and GUI) and one-byte scancodes which identify any ‘normal’ key pressed. 
+Boot reports contain several flags for ï¿½modifierï¿½ keys (shift, control, alt and GUI) and one-byte scancodes which identify any ï¿½normalï¿½ key pressed. 
 If no normal key is pressed then the scancode will be zero. When any key is released then a report is sent with either or both the flag and scancode cleared. 
 
 #### Consumer Control Reports
@@ -356,10 +299,10 @@ The report ID for system controls is 1.
 
 ## Virtual Keyboard Code Overview
 
-The FT81X/BT8XX device relies on a method called a display list to determine what is shown on the screen. 
+The IDM2040-7A device relies on a method called a display list to determine what is shown on the screen. 
 This means that a new display list is generated only when a display change is required. 
 
-Each virtual “key” on the keyboard is assigned a unique tag. 
+Each virtual ï¿½keyï¿½ on the keyboard is assigned a unique tag. 
 The function `eve_ui_keyboard_loop` in `eve_ui_keyboard.c` source code file detects a touchscreen press and returns the tag of the button.
 Some buttons are reserved within the `eve_ui` library to enable switching between keyboard, keypad, media and special screens. 
 
@@ -373,27 +316,23 @@ The screen header is specifically drawn in `eve_ui_main.c` to allow for the libr
 
 ### Special Screens
 
-A special screen is demonstrated which has a key layout specific to an application. This screen is selected using the orange ‘Z’ on the header bar.
+A special screen is demonstrated which has a key layout specific to an application. This screen is selected using the orange ï¿½Zï¿½ on the header bar.
  
 # Using the Virtual Keyboard
 
 ## Required Hardware
 
-The application note is intended to be used on an ME812A-WH50R or ME813A-WH50C EVE development module with an MM900EV2A or MM900EV3A MCU module. 
+The application note is intended to be used on an IDM2040-7A EVE development module. 
 The application note is written to work on an 800 by 600 display. 
-Changes to the EVE module or FT9XX device can be made in the `FT_platform.h` file in the `Includes` folder of the source code.
+Changes to the EVE module settings can be made in the `FT_platform.h` file in the `Includes` folder of the source code.
 
-The MM900EVxA module connects directly to the EVE development module with a set of pin headers. 
-The QSPI interface on the FT9XX device is taken through the pin headers to the FT81X/BT8XX on the EVE module. 
-The host PC connects via USB to the MM900EVxA module.
-
-![MM900EV2A and ME812A-WH50R module](docs/Figure7.jpg "MM900EV2A and ME812A-WH50R module")
-
-**Figure 7 MM900EV2A and ME812A-WH50R module**
+The RP2040 MCU connects directly to the EVE development module. 
+The SPI interface on the RP2040 device is taken through to the BT817 on the EVE module. 
+The host PC connects via USB to the IDM2040-7A module.
 
 ## Use of Application Note Software
 
-The virtual keyboard will wait until it is connected to a host. The FT81X/BT8XX display will indicate this with the Bridgetek logo and the caption “Waiting for host…”.
+The virtual keyboard will wait until it is connected to a host. The IDM2040-7A display will indicate this with the Bridgetek logo and the caption ï¿½Waiting for hostï¿½ï¿½.
 
 Once the host is connected then it will display the virtual keyboard.
 
@@ -401,18 +340,18 @@ Once the host is connected then it will display the virtual keyboard.
 
 **Figure 8 Virtual Keyboard Screen**
 
-The settings screen, is accessed from the “Settings” button allowing the choice of UK, US and German keyboard layouts. 
-Pressing “Settings” in the upper left hand corner will display an alphanumeric keyboard section of the virtual keyboard.
+The settings screen, is accessed from the ï¿½Settingsï¿½ button allowing the choice of UK, US and German keyboard layouts. 
+Pressing ï¿½Settingsï¿½ in the upper left hand corner will display an alphanumeric keyboard section of the virtual keyboard.
 
-Pressing the “KeyPad” button will show the control and keypad area of a standard keyboard. 
-To return to the main keyboard press the “Keyboard” button again.
+Pressing the ï¿½KeyPadï¿½ button will show the control and keypad area of a standard keyboard. 
+To return to the main keyboard press the ï¿½Keyboardï¿½ button again.
 
  
  ![Virtual KeyPad Screen](docs/Figure9.jpg "Virtual KeyPad Screen")
 
 **Figure 9 Virtual KeyPad Screen**
 
-Pressing the “Z” button will show the special application screen. The keyboard or keypad can then be accessed with appropriate buttons.
+Pressing the ï¿½Zï¿½ button will show the special application screen. The keyboard or keypad can then be accessed with appropriate buttons.
 
 There is no functionality in the special application screen.
 
@@ -423,7 +362,7 @@ The US and UK layouts are QWERTY layouts where the key positions change slightly
 the German layout is QWERTZ, however the layout is the same as the UK layout. 
 For the German keyboard to work the host needs to have its keyboard locale set to German to allow the scan codes to match the key labels.
 
-# Appendix C – Revision History
+# Appendix C ï¿½ Revision History
 
 Document Title: BRT_AN_012 FT9xx USBD HID Touch Panel
 
@@ -432,7 +371,7 @@ Product Page: http://brtchip.com/m-ft9/
 | Revision | Changes | Date |
 | ------------- |:-------------:| -----:|
 | 1.0 | Initial Release | 03/07/2017 | 
-| 1.1 | Fixed the Product Page broken link under Section Appendix C – Revision History. | 31/10/2017 | 
+| 1.1 | Fixed the Product Page broken link under Section Appendix C ï¿½ Revision History. | 31/10/2017 | 
 | 1.2 | Improvements to code and to the scope and coverage of the document. | 20/08/2| 1.3 | This release will support FT9xx Toolchain version V2.5.0 and later. Older toolchain versions are not supported due to an API change in the usbd.c library file. | 05/03/2019 |
 | 1.4 | Rewrite to use released version of [BRT_AN_025](https://github.com/Bridgetek/EVE-MCU-BRT_AN_025) | 11/01/2023 |
  |
