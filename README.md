@@ -1,19 +1,20 @@
 ![Bridgetek Logo](docs/Bridgetek-logo.png "Bridgetek")
 
-# BRT_AN_012 IDM2040-7A USBD HID Touch Panel
+# BRT_AN_012 IDM2040 Series USBD HID Touch Panel
 
-Application Note BRT_AN_012 IDM2040-7A USBD HID Touch Panel.  
+Application Note BRT_AN_012 IDM2040 USBD HID Touch Panel.  
 See https://brtchip.com/software-examples/ft9xx-examples/
 
 Demonstrates a USB HID implementing a Virtual Keyboard display on an Bridgetek EVE screen. 
-It uses the [BRT_AN_025](https://github.com/Bridgetek/EVE-MCU-BRT_AN_025) library. 
+It uses the [BRT_AN_025](https://github.com/Bridgetek/EVE-MCU-BRT_AN_025) EVE library. 
 
-This project requires a BridgeTek IDM2040-7A board and display.
+This project requires a BridgeTek IDM2040-7A or IDM2040-43A board and display. It is written to allow easy porting to other MCUs.
 
 ## Information
 
-This Application Note describes a virtual keyboard implemented with an IDM2040-7A touch screen. 
-The FT81X and BT81X and later devices are supported. It is assumed that the display is 800 by 480 pixels.
+This Application Note describes a virtual keyboard implemented with a Bridgetek IDM2040 touch screen. 
+The FT81X and BT81X and later devices are supported. 
+In this example, the IDM2040 modules will have a BT817 device and a display of 800 by 480 pixels.
 
 # Introduction
 
@@ -25,19 +26,22 @@ The keyboard can be set to show different keyboard layouts for different regiona
 
 **Figure 1 Block Diagram**
 
-The IDM2040-7A presents a HID keyboard interface to the USB Host computer. The RP2040 provides a
-bridge via SPI connection to the BT817 device. The IDM2040-7A device controls the TFT display and the
-touchscreen interface on the display.
+The IDM2040 contains a Raspberry Pi RP2040 MCU and is based on a Raspberry Pi pico board. 
+The RP2040 and BT817 devices are on the same board with a direct SPI bus connection.
+
+The RP2040 firmware presents a HID keyboard interface to the USB Host computer and a bridge via the SPI bus to the BT817 device. 
+
+The BT817 device controls the TFT display and the touchscreen interface on the display.
 
 ## Overview
 
-This document describes the design and implementation of the IDM2040-7A USBD HID Touch Panel code. The IDM2040-7A USBD HID Touch Panel allows a user to:
+This document describes the design and implementation of the IDM2040 USBD HID Touch Panel code. The IDM2040 USBD HID Touch Panel allows a user to:
 - Implement a virtual keyboard on a touchscreen device.
 - Connect the device to a host via USB.
 - Interact with the host as if a hardware keyboard was connected.
 - Modify the virtual keyboard for different international or regional layouts.
 
-This document is intended to demonstrate the capabilities of the IDM2040-7A display by emulating USB devices.
+This document is intended to demonstrate the capabilities of the IDM2040 display by emulating USB devices.
 
 ## Scope
 
@@ -47,11 +51,13 @@ There is no specific support for Apple Mac keyboards although most Apple Mac fun
 
 ### Features
 
-The application note shows how to implement a USB HID device and interface with an IDM2040-7A display IC. 
+The application note shows how to implement a USB HID device and interface with an FT81x or BT81x display IC from an RP2040 MCU.
+It is modular to allow components to be used by other projects or othe MCUs.
 
 The USB device interface is used to send keyboard scan codes to the host and receive reports to change the status of the Caps Lock, Scroll Lock and Num Lock LEDs on the keyboard.
 
-The IDM2040-7A interface shows communication with the display IC co-processor, reading touch events and processing these to generate the keyboard scan codes. The display has several screens that can be selected with buttons to allow different layout or part of a keyboard to be displayed.
+The RP2040 firmware shows communication with the display IC co-processor, reading touch events and processing these to generate the keyboard scan codes. 
+The display has several screens that can be selected with buttons to allow different layout or part of a keyboard to be displayed.
 
 ### Enhancement
 
@@ -66,23 +72,23 @@ This USB Device example application should be treated as an example. Full source
 
 # Project Overview
 
-The server main program is responsible for detecting a connection from the RP2040 to the host PC and instantiating the IDM2040-7A as a USB HID class when enumerated by the host. 
-It will also call the EVE library to initialise the IDM2040-7A.
+The main program is responsible for detecting a connection from the RP2040 to the host PC and instantiating as a USB HID class when enumerated by the host. 
+It will also call the EVE library to initialise and control the BT817 on the IDM2040.
 
 Source code is divided in folders for functional components. 
 
 ## `Sources` Folder
 
 The main part of the application is found in the `Sources` folder. This consists of the following files: 
-- The `main.c` file is generally responsible for the RP2040 setup and USB device code.
-- The file `keyboard.c` implements an interface between the USB device and the IDM2040-7A display.
+- The `main.c` file is generally responsible for the RP2040 setup and HID keyboard device code.
+- The file `usb_descriptors.c` implements USB device configuration on the RP2040.
 - Another file `eve_keyboard.c` controls the EVE keyboard component in the library.
 
 Files in these folders use the `Includes` folder for application specific header files.
 
 ## `lib/eve` Folder
 
-This folder holds the API code which abstracts the IDM2040-7A register and processing list writes into C functions. 
+This folder holds the API library code which abstracts the BT817 register and processing list writes into C functions. 
 It is code copied from the BRT_AN_025 Application Note: https://github.com/Bridgetek/EVE-MCU-BRT_AN_025
 
 Only the `ports/eve_arch_rpi`, `source` and `include` directories need to be copied. 
@@ -92,19 +98,19 @@ The macro `PLATFORM_PICO` *MUST* be defined for the proper compilation of this c
 ##	`eve_ui` Folder
 
 In the `eve_ui` folder are several files an routines that simplify the use of EVE:
-- The `eve_ui_main.c` file performs general IDM2040-7A operations such as initialisation, calibration and detecting touchscreen events (tags). 
+- The `eve_ui_main.c` file performs general BT817 operations such as initialisation, calibration and detecting touchscreen events (tags). 
 It will also generate some simple display lists for "Waiting for Host" and an optional screenshot feature.
-- `eve_ui_images.c` contains code for loading JPG images from Program Memory of the RP2040 to the data memory of the IDM2040-7A.
-- `eve_ui_ext_font.c` which has code to load a custom font extension used by this application to display characters not supported by the built-in fonts on the IDM2040-7A.
+- `eve_ui_images.c` contains code for loading JPG images from Program Memory of the RP2040 to the data memory of the BT817.
+- `eve_ui_ext_font.c` which has code to load a custom font extension used by this application to display characters not supported by the built-in fonts on the BT817.
 
 ##	`eve_ui_keyboard` Folder
 
-The `eve_ui_keyboard.c` file draws a keyboard on the EVE screen by sending display lists to the IDM2040-7A via the EVE library. 
+The `eve_ui_keyboard.c` file draws a keyboard on the EVE screen by sending display lists to the BT817 via the EVE library. 
 It will make display lists for each type of keyboard and populate tag information for the touchscreen controller.
 
 ## `Images` Folder
 
-The IDM2040-7A can display JPEG images. This folder contains the raw JPEG images which are used in the "eve_ui" library. They are copied to the IDM2040-7A by function calls in "eve_ui_images.c".
+The BT817 can display JPEG images. This folder contains the raw JPEG images which are used in the "eve_ui" library. They are copied to the BT817 by function calls in "eve_ui_images.c".
 
 The files in this folder are loaded into the final application image by creating an assembler file which contains the binary JPG image. 
 
@@ -138,7 +144,7 @@ Images which have been converted with this method will only appear in the final 
 
 ## `FontConvertor` Folder
 
-The FT8XX FNT_CVT utility (EVE Font Converter) is used to change a system TTF into a bitmap image which can be used by the IDM2040-7A. 
+The FT8XX FNT_CVT utility (EVE Font Converter) is used to change a system TTF into a bitmap image which can be used by the BT817. 
 The application uses the standard Arial font to make 2 font files: 
 ASCII characters from 32 to 127 and several UETF-8 characters for key labels not available through normal ASCII.
 
@@ -165,38 +171,40 @@ Provision is made to compile from CMake. The BRT_AN_012 source code from the `Br
 
 ## CMake
 
-From a command line prompt the `cmake` utility will generate and compile the `bin` file for programming the device. 
+From a command line prompt the `cmake` utility will generate and compile the `uf2` file for programming the device. 
 
-The generator "MinGW Makefiles" is used for the pico Toolchain. Also, it is useful to generate build files in an intermediate directory.
+The generator "Unix Makefiles" is used for the pico Toolchain. 
+When configuring the build environment using CMake the "PICO platform" should be reported as `RP2040` and the "PICO target board" should be reported as `pico`. 
+Also, it is useful to generate build files in an intermediate directory.
 A good command line to choose to generate build files for CMake is:
 
-`cmake -G "MinGW Makefiles" -B build -S .` 
+`cmake -G "Unix Makefiles" -B build -S .` 
 
 Then the binary can be compiled with:
 
 `cmake --build build`
 
-Optional parameters for the build are: 
-- Select debug or release builds with `-DBUILD=Release` or `-DBUILD=Debug`.
-- Change the name of the generated output files with `-DPROJECT=name`.
+Optional parameters for the build are as described in the pico/RP2040 documentation.
 
 # Changing the Application Software
 
 The application software provided can be altered and changed if required.
 
-With each software change, the project should be rebuilt and reprogrammed into the IDM2040-7A. 
+With each software change, the project should be rebuilt and reprogrammed into the IDM2040. 
 
 Windows will not reload a driver for a device with the same VID/PID and serial number but a different USB Class. If there are driver problems then remove the "USB Composite Device" detected for the application in Windows Device Manager then unplug and replug the device.
 
 # Software Implementation
 
 The application note implements a USB HID class device which can be accessed by a USB host with appropriate driver software. 
-The USB device code is implemented in `main.c` and USB HID class specific code is in `keyboard.c`. 
-All virtual keyboard drawing is carried out in the `eve_ui` library which invokes the eve library for low-level control of the IDM2040-7A device.
+The USB device code is implemented in `main.c` and USB HID class specific code is in `usb_descriptors.c`.
+Control of the screen is performed by `eve_keyboard.c`. 
+This includes all the screen layout except the keyboard area which is drawn in the `eve_ui_keyboard` library.
+All virtual keyboard drawing will use aspects of the `eve_ui` library which in-turn invokes the EVE library for low-level control of the BT817 device.
 
 Keypress events detected on the virtual keyboard will generate "tags" which uniquely represent one keyboard action. 
 These tags indicate that a key has been pressed, such as a letter or number key. 
-Each tag received will be converted into a HID report and sent to the host via USB.
+Each tag received by the `eve_ui_keyboard` library will be converted into a HID report in `main.c` and sent to the host via USB.
 
 ## USB Implementation Overview
 
@@ -299,18 +307,18 @@ The report ID for system controls is 1.
 
 ## Virtual Keyboard Code Overview
 
-The IDM2040-7A device relies on a method called a display list to determine what is shown on the screen. 
+The BT817 device relies on a method called a "display list" to determine what is shown on the screen. 
 This means that a new display list is generated only when a display change is required. 
 
 Each virtual "key" on the keyboard is assigned a unique tag. 
 The function `eve_ui_keyboard_loop` in `eve_ui_keyboard.c` source code file detects a touchscreen press and returns the tag of the button.
-Some buttons are reserved within the `eve_ui` library to enable switching between keyboard, keypad, media and special screens. 
+Some buttons are reserved within the `eve_ui_keyboard` library to enable switching between keyboard, keypad, media and special screens. 
 
-The `eve_ui` library is designed to isolate the screen drawing and management from the features of the USB keyboard device. 
+The `eve_ui_keyboard` library is designed to isolate the screen drawing and management from the features of the USB keyboard device. 
 This will allow it to be used as data entry method for other applications. 
-Only decoding of `eve_ui` defined tags to actions (or characters) is needed to add text entry. 
+Only decoding of `eve_ui_keyboard` defined tags to actions (or characters) is needed to add text entry. 
 
-The screen header is specifically drawn in `eve_ui_main.c` to allow for the library to be expanded with additional methods.
+The screen header is specifically drawn in `eve_keyboard.c` to allow for the library to be expanded with additional methods.
 
 ## Optional Features
 
@@ -322,17 +330,21 @@ A special screen is demonstrated which has a key layout specific to an applicati
 
 ## Required Hardware
 
-The application note is intended to be used on an IDM2040-7A EVE development module. 
+The application note is intended to be used on an IDM2040-7A or IDM2040-43A EVE development module. 
 The application note is written to work on an 800 by 600 display. 
-Changes to the EVE module settings can be made in the `FT_platform.h` file in the `Includes` folder of the source code.
+Changes to the EVE module settings can be made in the `EVE_config.h` file in the `Includes` folder of the source code.
 
-The RP2040 MCU connects directly to the EVE development module. 
-The SPI interface on the RP2040 device is taken through to the BT817 on the EVE module. 
-The host PC connects via USB to the IDM2040-7A module.
+ ![IDM2040-7A Module](docs/Figure7.jpg "IDM2040-7A Module")
+
+**IDM2040-7A Module**
+
+A standalone RP2040 MCU may alternatively be connected to an EVE development module via an SPI bus. 
+For a standard pico module SPI bus 1 must be used rather than SPI bus 0 which is used on the IDM2040 modules.
+This is changed in the `EVE_MCU-RP2040.c` file in the EVE library.
 
 ## Use of Application Note Software
 
-The virtual keyboard will wait until it is connected to a host. The IDM2040-7A display will indicate this with the Bridgetek logo and the caption "Waiting for host...".
+The virtual keyboard will wait until it is connected to a host. The IDM2040 display will indicate this with the Bridgetek logo and the caption "Waiting for host...".
 
 Once the host is connected then it will display the virtual keyboard.
 
@@ -346,27 +358,28 @@ Pressing "Settings" in the upper left hand corner will display an alphanumeric k
 Pressing the "KeyPad" button will show the control and keypad area of a standard keyboard. 
 To return to the main keyboard press the "Keyboard" button again.
 
- 
  ![Virtual KeyPad Screen](docs/Figure9.jpg "Virtual KeyPad Screen")
 
 **Figure 9 Virtual KeyPad Screen**
 
-Pressing the "Z" button will show the special application screen. The keyboard or keypad can then be accessed with appropriate buttons.
-
+Pressing the "Z" button will show the special application screen. 
 There is no functionality in the special application screen.
+The keyboard or keypad can still be accessed with appropriate buttons.
 
 ##	Keyboard Layouts
 
-There are 3 different layouts for keys supported in this application. 
+There are 3 different layouts for keys supported in this application:
+
 The US and UK layouts are QWERTY layouts where the key positions change slightly; 
 the German layout is QWERTZ, however the layout is the same as the UK layout. 
-For the German keyboard to work the host needs to have its keyboard locale set to German to allow the scan codes to match the key labels.
+
+For each keyboard to work the host needs to have its keyboard locale set to the keyboard layout correctly to allow the scan codes to match the key labels.
 
 # Appendix C " Revision History
 
-Document Title: BRT_AN_012 IDM2040-7A USBD HID Touch Panel
+Document Title: BRT_AN_012 IDM2040 USBD HID Touch Panel
 
-Product Page: https://brtchip.com/product/idm2040-7a/
+Product Page: https://brtchip.com/product/idm2040-7a/ https://brtchip.com/product/idm2040-43a/
 
 | Revision | Changes | Date |
 | ------------- |:-------------:| -----:|
